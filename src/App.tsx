@@ -1,9 +1,10 @@
 import React, { useState, ChangeEvent, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { generateMiamiImage } from './services/geminiService';
-// import { saveGeneratedImage, createUserSession, getUserGallery, isFirebaseConfigured } from './services/firebaseService';
+import { saveGeneratedImage, createUserSession, getUserGallery, isFirebaseConfigured, updateImageGalleryStatus } from './services/firebaseService';
 import PolaroidCard from './components/PolaroidCard';
 import NameEntry from './components/NameEntry';
+import HouGallery from './components/HouGallery';
 import { createGalleryPage } from './lib/albumUtils';
 import Footer from './components/Footer';
 import { STYLES } from './config/styles';
@@ -62,32 +63,37 @@ function App() {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isDownloading, setIsDownloading] = useState<boolean>(false);
     const [appState, setAppState] = useState<AppState>('name-entry');
-    // const [firebaseEnabled, setFirebaseEnabled] = useState<boolean>(false);
-    const firebaseEnabled = false; // Disabled for now to get app running
+    const [firebaseEnabled, setFirebaseEnabled] = useState<boolean>(false);
+    const [showGallery, setShowGallery] = useState<boolean>(false);
     const dragAreaRef = useRef<HTMLDivElement>(null);
     const isMobile = useMediaQuery('(max-width: 768px)');
     const currentTheme = getCurrentTheme();
 
     // Check Firebase configuration on mount
-    // useEffect(() => {
-    //     setFirebaseEnabled(isFirebaseConfigured());
-    // }, []);
+    useEffect(() => {
+        const checkFirebase = async () => {
+            const configured = isFirebaseConfigured();
+            setFirebaseEnabled(configured);
+            console.log('Firebase enabled:', configured);
+        };
+        checkFirebase();
+    }, []);
 
     const handleNameSubmit = async (name: string) => {
         setUserName(name);
 
         // Create Firebase session if enabled
-        // if (firebaseEnabled) {
-        //     try {
-        //         const session = await createUserSession(name);
-        //         if (session) {
-        //             setUserSessionId(session.id);
-        //             console.log('User session created:', session.id);
-        //         }
-        //     } catch (error) {
-        //         console.error('Failed to create user session:', error);
-        //     }
-        // }
+        if (firebaseEnabled) {
+            try {
+                const session = await createUserSession(name);
+                if (session) {
+                    setUserSessionId(session.id);
+                    console.log('User session created:', session.id);
+                }
+            } catch (error) {
+                console.error('Failed to create user session:', error);
+            }
+        }
 
         setAppState('idle');
     };
@@ -97,12 +103,20 @@ function App() {
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.onloadend = () => {
-                setUploadedImage(reader.result as string);
+                const result = reader.result as string;
+                console.log('Image uploaded, data URL length:', result?.length);
+                setUploadedImage(result);
                 setAppState('image-uploaded');
                 setGeneratedImages({}); // Clear previous results
+                setSavedToGallery({}); // Clear saved states
             };
             reader.readAsDataURL(file);
+        } else {
+            console.log('No file selected');
         }
+        
+        // Reset the input value to ensure onChange fires even for the same file
+        e.target.value = '';
     };
 
     const handleGenerateClick = async () => {
@@ -127,21 +141,21 @@ function App() {
                 const resultUrl = await generateMiamiImage(uploadedImage, prompt);
 
                 // Save to Firebase if enabled
-                // if (firebaseEnabled && userSessionId) {
-                //     try {
-                //         await saveGeneratedImage(
-                //             userSessionId,
-                //             userName,
-                //             styleKey,
-                //             styleConfig.name,
-                //             uploadedImage,
-                //             resultUrl
-                //         );
-                //     } catch (saveError) {
-                //         console.error(`Failed to save image for ${styleKey} to Firebase:`, saveError);
-                //         // Don't fail the generation if saving fails
-                //     }
-                // }
+                if (firebaseEnabled && userSessionId) {
+                    try {
+                        await saveGeneratedImage(
+                            userSessionId,
+                            userName,
+                            styleKey,
+                            styleConfig.name,
+                            uploadedImage,
+                            resultUrl
+                        );
+                    } catch (saveError) {
+                        console.error(`Failed to save image for ${styleKey} to Firebase:`, saveError);
+                        // Don't fail the generation if saving fails
+                    }
+                }
 
                 setGeneratedImages(prev => ({
                     ...prev,
@@ -224,20 +238,57 @@ function App() {
         }
     };
 
-    const handleSaveToGallery = (styleKey: string) => {
+    const handleSaveToGallery = async (styleName: string) => {
+        // Find the styleKey from the style name
+        const styleKey = Object.keys(currentTheme.styles).find(key => 
+            currentTheme.styles[key].name === styleName
+        );
+        
+        if (!styleKey) {
+            console.error('Could not find style key for:', styleName);
+            return;
+        }
+
+        const isCurrentlySaved = savedToGallery[styleKey];
+        const newStatus = !isCurrentlySaved;
+
+        console.log(`${isCurrentlySaved ? 'Removing' : 'Saving'} ${styleName} (${styleKey}) to gallery`);
+        
+        // Update local state immediately for responsive UI
         setSavedToGallery(prev => ({
             ...prev,
-            [styleKey]: !prev[styleKey]
+            [styleKey]: newStatus
         }));
         
-        // Here you would save to Firebase or your backend
-        // For now, just update local state
-        console.log(`${savedToGallery[styleKey] ? 'Removing' : 'Saving'} ${styleKey} to gallery`);
+        // Save to Firebase if enabled
+        if (firebaseEnabled && userSessionId) {
+            try {
+                const success = await updateImageGalleryStatus(userSessionId, styleKey, newStatus);
+                if (!success) {
+                    console.error('Failed to update gallery status in Firebase');
+                    // Revert local state if Firebase save fails
+                    setSavedToGallery(prev => ({
+                        ...prev,
+                        [styleKey]: isCurrentlySaved
+                    }));
+                }
+            } catch (error) {
+                console.error('Failed to update gallery status in Firebase:', error);
+                // Revert local state if Firebase save fails
+                setSavedToGallery(prev => ({
+                    ...prev,
+                    [styleKey]: isCurrentlySaved
+                }));
+            }
+        }
     };
 
     const handleViewGallery = () => {
-        // TODO: Navigate to gallery page
-        console.log('Opening Hou\' Gallery...');
+        setShowGallery(true);
+    };
+
+    const handleCloseGallery = () => {
+        setShowGallery(false);
     };
 
     const handleReset = () => {
@@ -247,16 +298,31 @@ function App() {
         setAppState('idle');
     };
 
-    const handleDownloadIndividualImage = (styleKey: string) => {
+    const handleDownloadIndividualImage = (styleName: string) => {
+        // Find the styleKey from the style name
+        const styleKey = Object.keys(currentTheme.styles).find(key => 
+            currentTheme.styles[key].name === styleName
+        );
+        
+        if (!styleKey) {
+            console.error('Could not find style key for:', styleName);
+            return;
+        }
+
         const image = generatedImages[styleKey];
         if (image?.status === 'done' && image.url) {
-            const styleConfig = currentTheme.styles[styleKey];
+            console.log('Downloading individual image:', styleName, image.url);
+            
+            // Create download link
             const link = document.createElement('a');
             link.href = image.url;
-            link.download = `miami-${styleConfig.name.toLowerCase()}-${userName}.jpg`;
+            link.download = `casa-cardinal-${styleName.toLowerCase()}-${userName}.jpg`;
+            link.style.display = 'none';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        } else {
+            console.error('Image not ready for download:', styleName, image);
         }
     };
 
@@ -350,7 +416,14 @@ function App() {
                                      status="done"
                                  />
                             </label>
-                            <input id="file-upload" type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleImageUpload} />
+                            <input 
+                                key={uploadedImage ? 'uploaded' : 'empty'} 
+                                id="file-upload" 
+                                type="file" 
+                                className="hidden" 
+                                accept="image/png, image/jpeg, image/webp" 
+                                onChange={handleImageUpload} 
+                            />
                             <p className="mt-8 font-permanent-marker text-neutral-500 text-center max-w-xs text-lg">
                                 Click the polaroid to upload your photo and create your Miami vibe.
                             </p>
@@ -465,6 +538,11 @@ function App() {
                 )}
             </div>
             <Footer />
+            
+            {/* Hou' Gallery Modal */}
+            {showGallery && (
+                <HouGallery onClose={handleCloseGallery} />
+            )}
         </main>
     );
 }

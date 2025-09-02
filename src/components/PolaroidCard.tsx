@@ -58,10 +58,16 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
         if (status === 'pending') {
             setIsDeveloped(false);
             setIsImageLoaded(false);
-        }
-        if (status === 'done' && imageUrl) {
-            setIsDeveloped(false);
-            setIsImageLoaded(false);
+        } else if (status === 'done' && imageUrl) {
+            // For uploaded images (data URLs), skip the developing animation
+            if (imageUrl.startsWith('data:')) {
+                setIsImageLoaded(true);
+                setIsDeveloped(true);
+            } else {
+                // For generated images (URLs), use the developing animation
+                setIsDeveloped(false);
+                setIsImageLoaded(false);
+            }
         }
     }, [imageUrl, status]);
 
@@ -119,9 +125,10 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
                                 <div
                                     onClick={(e) => {
                                         e.stopPropagation();
+                                        console.log('Heart clicked for:', caption);
                                         onSaveToGallery(caption);
                                     }}
-                                    className="p-2 bg-black/50 rounded-full hover:bg-black/75 focus:outline-none focus:ring-2 focus:ring-white"
+                                    className="p-2 bg-black/50 rounded-full hover:bg-black/75 focus:outline-none focus:ring-2 focus:ring-white cursor-pointer"
                                 >
                                     <HeartIcon
                                         isSaved={isSavedToGallery}
@@ -133,6 +140,7 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation(); // Prevent drag from starting on click
+                                        console.log('Download clicked for:', caption);
                                         onDownload(caption);
                                     }}
                                     className="p-2 bg-black/50 rounded-full text-white hover:bg-black/75 focus:outline-none focus:ring-2 focus:ring-white"
@@ -165,7 +173,10 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
                             key={imageUrl}
                             src={imageUrl}
                             alt={caption}
-                            onLoad={() => setIsImageLoaded(true)}
+                            onLoad={() => {
+                                console.log('Image loaded successfully:', caption);
+                                setIsImageLoaded(true);
+                            }}
                             onError={() => {
                                 console.error('Failed to load image:', imageUrl);
                                 setIsImageLoaded(false);
@@ -176,11 +187,24 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
                                 : 'opacity-70 filter sepia(0.3) contrast(0.9) brightness(0.9)'
                             }`}
                             style={{ 
-                                opacity: isImageLoaded ? 1 : 0,
+                                display: isImageLoaded ? 'block' : 'none',
                                 minHeight: '200px',
                                 backgroundColor: '#f3f4f6'
                             }}
                         />
+                        
+                        {/* Loading placeholder while image loads */}
+                        {!isImageLoaded && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                                <div className="text-gray-400 text-center">
+                                    <svg className="animate-spin h-8 w-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span className="text-sm font-permanent-marker">Loading...</span>
+                                </div>
+                            </div>
+                        )}
 
                         {/* The developing chemical overlay - fades out */}
                         <div

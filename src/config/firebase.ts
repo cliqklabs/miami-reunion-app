@@ -1,10 +1,9 @@
-// Firebase configuration for Miami Reunion App
-// This file is ready to be used when you set up Firebase for gallery functionality
-
+// Firebase configuration for Casa Cardinal Miami Reunion App
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
+import { getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,13 +12,15 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase (only if config is available)
+// Initialize Firebase
 let app;
 let db;
 let storage;
 let auth;
+let analytics;
 
 try {
   if (firebaseConfig.apiKey) {
@@ -27,12 +28,18 @@ try {
     db = getFirestore(app);
     storage = getStorage(app);
     auth = getAuth(app);
-    console.log('Firebase initialized successfully');
+    
+    // Analytics only works in browser environment
+    if (typeof window !== 'undefined') {
+      analytics = getAnalytics(app);
+    }
+    
+    console.log('Firebase initialized successfully for Casa Cardinal');
   } else {
-    console.log('Firebase not configured - gallery functionality will be local only');
+    console.log('Firebase not configured - check environment variables');
   }
 } catch (error) {
   console.error('Failed to initialize Firebase:', error);
 }
 
-export { app, db, storage, auth };
+export { app, db, storage, auth, analytics };

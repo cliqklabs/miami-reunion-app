@@ -2,7 +2,7 @@
 // Handles user sessions and image storage for gallery functionality
 
 import { db, storage, auth } from '../config/firebase';
-import { collection, addDoc, updateDoc, doc, getDoc, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, getDoc, query, where, getDocs, Timestamp, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 
@@ -152,6 +152,67 @@ export const getUserGallery = async (userName: string): Promise<GeneratedImage[]
     })) as GeneratedImage[];
   } catch (error) {
     console.error('Failed to fetch user gallery:', error);
+    return [];
+  }
+};
+
+// Update gallery status for an image
+export const updateImageGalleryStatus = async (
+  userId: string,
+  styleId: string,
+  inGallery: boolean
+): Promise<boolean> => {
+  if (!db) return false;
+
+  try {
+    // Find the image by userId and styleId
+    const q = query(
+      collection(db, 'images'),
+      where('userId', '==', userId),
+      where('styleId', '==', styleId)
+    );
+
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      console.error('No image found for userId:', userId, 'styleId:', styleId);
+      return false;
+    }
+
+    // Update the first matching image (there should only be one)
+    const imageDoc = querySnapshot.docs[0];
+    await updateDoc(doc(db, 'images', imageDoc.id), {
+      inGallery: inGallery,
+      updatedAt: Timestamp.now()
+    });
+
+    console.log('Updated gallery status for image:', imageDoc.id, 'inGallery:', inGallery);
+    return true;
+  } catch (error) {
+    console.error('Failed to update image gallery status:', error);
+    return false;
+  }
+};
+
+// Get all gallery images from all users
+export const getAllGalleryImages = async (): Promise<GeneratedImage[]> => {
+  if (!db) return [];
+
+  try {
+    const q = query(
+      collection(db, 'images'),
+      where('inGallery', '==', true),
+      orderBy('timestamp', 'desc')
+    );
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      timestamp: doc.data().timestamp.toDate(),
+    })) as GeneratedImage[];
+  } catch (error) {
+    console.error('Failed to fetch all gallery images:', error);
     return [];
   }
 };
