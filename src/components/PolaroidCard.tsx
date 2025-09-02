@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DraggableCardContainer, DraggableCardBody } from './ui/draggable-card';
 import { cn } from '../lib/utils';
+import HeartIcon from './HeartIcon';
 import type { PanInfo } from 'framer-motion';
 
 type ImageStatus = 'pending' | 'done' | 'error';
@@ -13,6 +14,8 @@ interface PolaroidCardProps {
     dragConstraintsRef?: React.RefObject<HTMLElement>;
     onShake?: (caption: string) => void;
     onDownload?: (caption: string) => void;
+    onSaveToGallery?: (caption: string) => void;
+    isSavedToGallery?: boolean;
     isMobile?: boolean;
 }
 
@@ -44,7 +47,7 @@ const Placeholder = () => (
 );
 
 
-const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, error, dragConstraintsRef, onShake, onDownload, isMobile }) => {
+const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, error, dragConstraintsRef, onShake, onDownload, onSaveToGallery, isSavedToGallery = false, isMobile }) => {
     const [isDeveloped, setIsDeveloped] = useState(false);
     const [isImageLoaded, setIsImageLoaded] = useState(false);
     const lastShakeTime = useRef(0);
@@ -112,6 +115,20 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
                             "absolute top-2 right-2 z-20 flex flex-col gap-2 transition-opacity duration-300",
                             !isMobile && "opacity-0 group-hover:opacity-100",
                         )}>
+                            {onSaveToGallery && (
+                                <div
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSaveToGallery(caption);
+                                    }}
+                                    className="p-2 bg-black/50 rounded-full hover:bg-black/75 focus:outline-none focus:ring-2 focus:ring-white"
+                                >
+                                    <HeartIcon
+                                        isSaved={isSavedToGallery}
+                                        size={20}
+                                    />
+                                </div>
+                            )}
                             {onDownload && (
                                 <button
                                     onClick={(e) => {
@@ -149,12 +166,20 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
                             src={imageUrl}
                             alt={caption}
                             onLoad={() => setIsImageLoaded(true)}
-                            className={`w-full h-full object-cover transition-all duration-[2000ms] ease-in-out ${
+                            onError={() => {
+                                console.error('Failed to load image:', imageUrl);
+                                setIsImageLoaded(false);
+                            }}
+                            className={`w-full h-full object-cover object-center transition-all duration-[2000ms] ease-in-out ${
                                 isDeveloped
                                 ? 'opacity-100 filter-none'
                                 : 'opacity-70 filter sepia(0.3) contrast(0.9) brightness(0.9)'
                             }`}
-                            style={{ opacity: isImageLoaded ? 1 : 0 }}
+                            style={{ 
+                                opacity: isImageLoaded ? 1 : 0,
+                                minHeight: '200px',
+                                backgroundColor: '#f3f4f6'
+                            }}
                         />
 
                         {/* The developing chemical overlay - fades out */}
@@ -179,7 +204,10 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
         </>
     );
 
-    if (isMobile) {
+    // For non-draggable cards (like upload placeholder), use static container
+    const shouldBeDraggable = status === 'done' && imageUrl && !isMobile;
+
+    if (isMobile || !shouldBeDraggable) {
         return (
             <div className="bg-neutral-100 dark:bg-neutral-100 !p-4 !pb-16 flex flex-col items-center justify-start aspect-[3/4] w-80 max-w-full rounded-md shadow-lg relative">
                 {cardInnerContent}

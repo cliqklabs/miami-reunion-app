@@ -58,6 +58,7 @@ function App() {
     const [userSessionId, setUserSessionId] = useState<string | null>(null);
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
     const [generatedImages, setGeneratedImages] = useState<Record<string, GeneratedImage>>({});
+    const [savedToGallery, setSavedToGallery] = useState<Record<string, boolean>>({});
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isDownloading, setIsDownloading] = useState<boolean>(false);
     const [appState, setAppState] = useState<AppState>('name-entry');
@@ -223,9 +224,26 @@ function App() {
         }
     };
 
+    const handleSaveToGallery = (styleKey: string) => {
+        setSavedToGallery(prev => ({
+            ...prev,
+            [styleKey]: !prev[styleKey]
+        }));
+        
+        // Here you would save to Firebase or your backend
+        // For now, just update local state
+        console.log(`${savedToGallery[styleKey] ? 'Removing' : 'Saving'} ${styleKey} to gallery`);
+    };
+
+    const handleViewGallery = () => {
+        // TODO: Navigate to gallery page
+        console.log('Opening Hou\' Gallery...');
+    };
+
     const handleReset = () => {
         setUploadedImage(null);
         setGeneratedImages({});
+        setSavedToGallery({});
         setAppState('idle');
     };
 
@@ -278,11 +296,22 @@ function App() {
     return (
         <main className="bg-gradient-to-br from-teal-900 via-blue-900 to-indigo-900 text-neutral-200 min-h-screen w-full flex flex-col items-center justify-center p-4 pb-24 overflow-hidden relative">
             <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.05]"></div>
+            
+            {/* View Hou' Gallery Button - Top Right */}
+            {appState !== 'name-entry' && (
+                <button
+                    onClick={handleViewGallery}
+                    className="fixed top-4 right-4 z-30 font-permanent-marker text-sm bg-gradient-to-r from-pink-500 to-orange-500 text-white py-2 px-4 rounded-lg transform transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-pink-500/25 active:scale-95"
+                >
+                    View Hou' Gallery
+                </button>
+            )}
 
             <div className="z-10 flex flex-col items-center justify-center w-full h-full flex-1 min-h-0">
                 <div className="text-center mb-10">
-                    <h1 className="text-6xl md:text-8xl font-caveat font-bold text-neutral-100">Miami Reunion</h1>
-                    <p className="font-permanent-marker text-neutral-300 mt-2 text-xl tracking-wide">{currentTheme.subtitle}</p>
+                    <h1 className="text-5xl md:text-7xl font-caveat font-bold text-neutral-100">Casa Cardinal</h1>
+                    <p className="font-permanent-marker text-neutral-300 mt-2 text-lg tracking-wide">Miami Hou' 2025</p>
+                    <p className="font-permanent-marker text-neutral-400 mt-1 text-base tracking-wide">{currentTheme.subtitle}</p>
                 </div>
 
                 {appState === 'name-entry' && (
@@ -365,6 +394,8 @@ function App() {
                                                 error={generatedImages[styleKey]?.error}
                                                 onShake={handleRegenerateStyle}
                                                 onDownload={handleDownloadIndividualImage}
+                                                onSaveToGallery={handleSaveToGallery}
+                                                isSavedToGallery={savedToGallery[styleKey]}
                                                 isMobile={isMobile}
                                             />
                                         </div>
@@ -390,7 +421,7 @@ function App() {
                                             }}
                                             transition={{ type: 'spring', stiffness: 100, damping: 20, delay: index * 0.15 }}
                                         >
-                                            <PolaroidCard
+                                                                                        <PolaroidCard 
                                                 dragConstraintsRef={dragAreaRef}
                                                 caption={styleConfig.name}
                                                 status={generatedImages[styleKey]?.status || 'pending'}
@@ -398,6 +429,8 @@ function App() {
                                                 error={generatedImages[styleKey]?.error}
                                                 onShake={handleRegenerateStyle}
                                                 onDownload={handleDownloadIndividualImage}
+                                                onSaveToGallery={handleSaveToGallery}
+                                                isSavedToGallery={savedToGallery[styleKey]}
                                                 isMobile={isMobile}
                                             />
                                         </motion.div>
@@ -405,20 +438,27 @@ function App() {
                                 })}
                             </div>
                         )}
-                         <div className="h-20 mt-4 flex items-center justify-center">
+                         <div className="mt-4 flex flex-col items-center justify-center">
                             {appState === 'results-shown' && (
-                                <div className="flex flex-col sm:flex-row items-center gap-4">
-                                    <button
-                                        onClick={handleDownloadGallery}
-                                        disabled={isDownloading}
-                                        className={`${primaryButtonClasses} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                    >
-                                        {isDownloading ? 'Creating Gallery...' : 'Download Gallery'}
-                                    </button>
-                                    <button onClick={handleReset} className={secondaryButtonClasses}>
-                                        Start Over
-                                    </button>
-                                </div>
+                                <>
+                                    <div className="text-center mb-4">
+                                        <p className="font-permanent-marker text-neutral-400 text-sm">
+                                            Click on ❤️ heart icon to add to Hou' Gallery
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                                        <button
+                                            onClick={handleDownloadGallery}
+                                            disabled={isDownloading}
+                                            className={`${primaryButtonClasses} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                        >
+                                            {isDownloading ? 'Creating...' : 'Download'}
+                                        </button>
+                                        <button onClick={handleReset} className={secondaryButtonClasses}>
+                                            Start Over
+                                        </button>
+                                    </div>
+                                </>
                             )}
                         </div>
                     </>
