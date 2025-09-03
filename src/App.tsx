@@ -5,8 +5,8 @@ import { saveGeneratedImage, createUserSession, getUserGallery, isFirebaseConfig
 import PolaroidCard from './components/PolaroidCard';
 import NameEntry from './components/NameEntry';
 import HouGallery from './components/HouGallery';
-import { createGalleryPage } from './lib/albumUtils';
-import Footer from './components/Footer';
+// import { createGalleryPage } from './lib/albumUtils'; // Removed - no longer using download functionality
+// import Footer from './components/Footer'; // Removed - no longer using footer
 import { STYLES } from './config/styles';
 import { getCurrentTheme } from './config/themes';
 
@@ -61,7 +61,7 @@ function App() {
     const [generatedImages, setGeneratedImages] = useState<Record<string, GeneratedImage>>({});
     const [savedToGallery, setSavedToGallery] = useState<Record<string, boolean>>({});
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [isDownloading, setIsDownloading] = useState<boolean>(false);
+    // const [isDownloading, setIsDownloading] = useState<boolean>(false); // Removed - no longer using download functionality
     const [appState, setAppState] = useState<AppState>('name-entry');
     const [firebaseEnabled, setFirebaseEnabled] = useState<boolean>(false);
     const [showGallery, setShowGallery] = useState<boolean>(false);
@@ -422,6 +422,8 @@ function App() {
         }
     };
 
+    // Removed handleDownloadGallery function - no longer using download functionality
+    /*
     const handleDownloadGallery = async () => {
         setIsDownloading(true);
         try {
@@ -454,62 +456,44 @@ function App() {
             setIsDownloading(false);
         }
     };
+    */
 
     return (
-        <main className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 pb-24 overflow-hidden text-neutral-200">
-            {/* Miami Vice Gradient Background */}
-            <div className="absolute inset-0 bg-gradient-to-b from-purple-900 via-purple-700 to-pink-500"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-orange-400 via-pink-400/50 to-transparent"></div>
+        <main className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 overflow-hidden text-neutral-100">
+            {/* Dark Miami 80s Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900"></div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-violet-950/80 via-transparent to-purple-900/60"></div>
+            <div className="absolute inset-0 bg-gradient-to-bl from-transparent via-indigo-950/40 to-slate-900"></div>
             
-            {/* Palm Tree Silhouettes */}
-            <div className="absolute bottom-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                {/* Left Palm Tree */}
-                <div className="absolute bottom-0 left-8 w-32 h-96 opacity-60">
-                    {/* Palm trunk */}
-                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-3 h-48 bg-gradient-to-t from-purple-900 to-purple-800 rounded-t-lg"></div>
-                    {/* Palm fronds */}
-                    <div className="absolute bottom-40 left-1/2 transform -translate-x-1/2 -translate-y-8">
-                        <div className="absolute w-20 h-2 bg-purple-900 rounded-full transform -rotate-45 origin-right"></div>
-                        <div className="absolute w-24 h-2 bg-purple-900 rounded-full transform -rotate-12 origin-right"></div>
-                        <div className="absolute w-22 h-2 bg-purple-900 rounded-full transform rotate-12 origin-left"></div>
-                        <div className="absolute w-20 h-2 bg-purple-900 rounded-full transform rotate-45 origin-left"></div>
-                        <div className="absolute w-18 h-2 bg-purple-900 rounded-full transform -rotate-75 origin-right"></div>
-                        <div className="absolute w-18 h-2 bg-purple-900 rounded-full transform rotate-75 origin-left"></div>
-                    </div>
-                </div>
-                
-                {/* Right Palm Tree */}
-                <div className="absolute bottom-0 right-12 w-40 h-full opacity-50">
-                    {/* Palm trunk */}
-                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-64 bg-gradient-to-t from-orange-900 to-orange-800 rounded-t-lg"></div>
-                    {/* Palm fronds */}
-                    <div className="absolute bottom-56 left-1/2 transform -translate-x-1/2 -translate-y-8">
-                        <div className="absolute w-24 h-2 bg-orange-900 rounded-full transform -rotate-45 origin-right"></div>
-                        <div className="absolute w-28 h-2 bg-orange-900 rounded-full transform -rotate-20 origin-right"></div>
-                        <div className="absolute w-26 h-2 bg-orange-900 rounded-full transform rotate-20 origin-left"></div>
-                        <div className="absolute w-24 h-2 bg-orange-900 rounded-full transform rotate-45 origin-left"></div>
-                        <div className="absolute w-20 h-2 bg-orange-900 rounded-full transform -rotate-70 origin-right"></div>
-                        <div className="absolute w-20 h-2 bg-orange-900 rounded-full transform rotate-70 origin-left"></div>
-                        <div className="absolute w-22 h-2 bg-orange-900 rounded-full transform rotate-90 origin-center"></div>
-                    </div>
-                </div>
-            </div>
-            
-            {/* Neon Light Streaks */}
+            {/* Neon Pink and Purple Streaks */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {/* Top right streak */}
-                <div className="absolute top-16 right-20 w-32 h-1 bg-gradient-to-r from-transparent via-pink-400 to-transparent transform rotate-45 opacity-80 shadow-lg shadow-pink-400/50"></div>
-                {/* Middle left streak */}
-                <div className="absolute top-40 left-16 w-24 h-1 bg-gradient-to-r from-transparent via-purple-300 to-transparent transform -rotate-45 opacity-60 shadow-lg shadow-purple-300/50"></div>
-                {/* Bottom right streak */}
-                <div className="absolute bottom-32 right-32 w-20 h-1 bg-gradient-to-r from-transparent via-orange-300 to-transparent transform rotate-12 opacity-70 shadow-lg shadow-orange-300/50"></div>
-                {/* Additional small streaks */}
-                <div className="absolute top-24 right-40 w-16 h-0.5 bg-gradient-to-r from-transparent via-pink-300 to-transparent transform rotate-30 opacity-60"></div>
-                <div className="absolute bottom-48 left-24 w-12 h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent transform -rotate-60 opacity-50"></div>
+                {/* Large diagonal pink streak */}
+                <div className="absolute top-0 right-0 w-96 h-2 bg-gradient-to-r from-transparent via-pink-500/80 to-transparent transform rotate-45 origin-right shadow-lg shadow-pink-500/30 blur-sm"></div>
+                <div className="absolute top-1 right-1 w-96 h-0.5 bg-gradient-to-r from-transparent via-pink-400 to-transparent transform rotate-45 origin-right"></div>
+                
+                {/* Purple streak top left */}
+                <div className="absolute top-20 left-0 w-80 h-1.5 bg-gradient-to-r from-transparent via-purple-400/70 to-transparent transform -rotate-12 shadow-lg shadow-purple-400/20 blur-sm"></div>
+                <div className="absolute top-20.5 left-0.5 w-80 h-0.5 bg-gradient-to-r from-transparent via-purple-300 to-transparent transform -rotate-12"></div>
+                
+                {/* Central pink diagonal */}
+                <div className="absolute top-1/3 left-1/4 w-72 h-1 bg-gradient-to-r from-transparent via-pink-600/60 to-transparent transform rotate-30 shadow-lg shadow-pink-600/25 blur-sm"></div>
+                <div className="absolute top-1/3 left-1/4 w-72 h-0.5 bg-gradient-to-r from-transparent via-pink-400 to-transparent transform rotate-30"></div>
+                
+                {/* Bottom purple streak */}
+                <div className="absolute bottom-32 left-0 w-64 h-1.5 bg-gradient-to-r from-transparent via-purple-500/70 to-transparent transform rotate-45 shadow-lg shadow-purple-500/30 blur-sm"></div>
+                <div className="absolute bottom-32 left-0 w-64 h-0.5 bg-gradient-to-r from-transparent via-purple-300 to-transparent transform rotate-45"></div>
+                
+                {/* Smaller accent streaks */}
+                <div className="absolute top-1/2 right-20 w-48 h-1 bg-gradient-to-r from-transparent via-pink-400/50 to-transparent transform -rotate-20 blur-sm"></div>
+                <div className="absolute bottom-1/4 right-1/3 w-40 h-0.5 bg-gradient-to-r from-transparent via-purple-400/60 to-transparent transform rotate-60"></div>
+                <div className="absolute top-3/4 left-1/3 w-32 h-0.5 bg-gradient-to-r from-transparent via-pink-500/70 to-transparent transform -rotate-30"></div>
             </div>
             
-            {/* Subtle grid overlay */}
-            <div className="absolute inset-0 bg-grid-white/[0.02]"></div>
+            {/* Subtle dark grid overlay */}
+            <div className="absolute inset-0 bg-grid-white/[0.01] opacity-50"></div>
+            
+            {/* Additional atmospheric glow */}
+            <div className="absolute inset-0 bg-gradient-radial from-purple-900/20 via-transparent to-transparent"></div>
             
             {/* View Hou' Gallery Button - Top Right */}
             {appState !== 'name-entry' && (
@@ -523,9 +507,9 @@ function App() {
 
             <div className="z-10 flex flex-col items-center justify-center w-full h-full flex-1 min-h-0">
                 <div className={`text-center mb-10 ${appState !== 'name-entry' ? 'mt-16 md:mt-0' : ''}`}>
-                    <h1 className="text-5xl md:text-7xl font-caveat font-bold text-neutral-100">Casa Cardinal</h1>
-                    <p className="font-permanent-marker text-neutral-300 mt-2 text-lg tracking-wide">Miami Hou' 2025</p>
-                    <p className="font-permanent-marker text-neutral-400 mt-1 text-base tracking-wide">{currentTheme.subtitle}</p>
+                    <h1 className="text-7xl md:text-9xl font-caveat font-bold text-purple-300 drop-shadow-[0_0_20px_rgba(196,181,253,0.6)] shadow-purple-300/50" style={{textShadow: '0 0 10px rgba(196,181,253,0.8), 0 0 20px rgba(196,181,253,0.6), 0 0 30px rgba(196,181,253,0.4)'}}>Casa Cardinal</h1>
+                    <p className="font-permanent-marker text-neutral-200 mt-2 text-2xl tracking-wide">Miami Hou' 2025</p>
+                    <p className="font-permanent-marker text-neutral-300 mt-1 text-base tracking-wide">{currentTheme.subtitle}</p>
                 </div>
 
                 {appState === 'name-entry' && (
@@ -559,10 +543,22 @@ function App() {
                              className="flex flex-col items-center"
                         >
                             <label htmlFor="file-upload" className="cursor-pointer group transform hover:scale-105 transition-transform duration-300">
-                                 <PolaroidCard
-                                     caption="Click to begin"
-                                     status="done"
-                                 />
+                                 <div className="bg-neutral-100 dark:bg-neutral-100 p-3 pb-12 flex flex-col items-center justify-start aspect-[3/4] w-64 max-w-full rounded-md shadow-lg relative">
+                                     <div className="w-full bg-neutral-900 shadow-inner aspect-[4/5] relative overflow-hidden group">
+                                         <div className="flex flex-col items-center justify-center h-full text-neutral-500 group-hover:text-neutral-300 transition-colors duration-300">
+                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                             </svg>
+                                             <span className="font-permanent-marker text-xl">Upload Photo</span>
+                                         </div>
+                                     </div>
+                                     <div className="absolute bottom-3 left-3 right-3 text-center px-2">
+                                         <p className="font-permanent-marker text-lg truncate text-black">
+                                             Click to begin
+                                         </p>
+                                     </div>
+                                 </div>
                             </label>
                             <input 
                                 key={uploadedImage ? 'uploaded' : 'empty'} 
@@ -572,34 +568,32 @@ function App() {
                                 accept="image/png, image/jpeg, image/webp" 
                                 onChange={handleImageUpload} 
                             />
-                            <p className="mt-8 font-permanent-marker text-neutral-500 text-center max-w-xs text-lg">
+                            <p className="mt-8 font-permanent-marker text-neutral-300 text-center max-w-xs text-lg">
                                 Click the polaroid to upload your photo and create your Miami vibe.
                             </p>
-                            <p className="mt-4 text-sm text-neutral-400">
+                            <p className="mt-4 text-sm text-neutral-200">
                                 Welcome, {userName}!
                             </p>
-                            {firebaseEnabled && (
-                                <motion.button 
-                                    onClick={() => setShowGallery(true)}
-                                    className={`${secondaryButtonClasses} mt-6`}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 2.5, duration: 0.5 }}
-                                >
-                                    View Hou' Gallery
-                                </motion.button>
-                            )}
                         </motion.div>
                     </div>
                 )}
 
                 {appState === 'image-uploaded' && uploadedImage && (
                     <div className="flex flex-col items-center gap-6">
-                         <PolaroidCard
-                            imageUrl={uploadedImage}
-                            caption="Your Photo"
-                            status="done"
-                         />
+                         <div className="bg-neutral-100 dark:bg-neutral-100 p-3 pb-12 flex flex-col items-center justify-start aspect-[3/4] w-64 max-w-full rounded-md shadow-lg relative">
+                             <div className="w-full bg-neutral-900 shadow-inner aspect-[4/5] relative overflow-hidden">
+                                 <img
+                                     src={uploadedImage}
+                                     alt="Your Photo"
+                                     className="w-full h-full object-contain object-center"
+                                 />
+                             </div>
+                             <div className="absolute bottom-3 left-3 right-3 text-center px-2">
+                                 <p className="font-permanent-marker text-lg truncate text-black">
+                                     Your Photo
+                                 </p>
+                             </div>
+                         </div>
                          <div className="flex items-center gap-4 mt-4">
                             <button onClick={handleReset} className={secondaryButtonClasses}>
                                 Different Photo
@@ -692,18 +686,11 @@ function App() {
                             {appState === 'results-shown' && (
                                 <>
                                     <div className="text-center mb-4">
-                                        <p className="font-permanent-marker text-neutral-400 text-sm">
+                                        <p className="font-permanent-marker text-neutral-300 text-sm">
                                             Click on ❤️ heart icon to add to Hou' Gallery
                                         </p>
                                     </div>
                                     <div className="flex flex-col sm:flex-row items-center gap-4">
-                                        <button
-                                            onClick={handleDownloadGallery}
-                                            disabled={isDownloading}
-                                            className={`${primaryButtonClasses} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                        >
-                                            {isDownloading ? 'Creating...' : 'Download'}
-                                        </button>
                                         {firebaseEnabled && (
                                             <button 
                                                 onClick={() => setShowGallery(true)}
@@ -722,7 +709,6 @@ function App() {
                     </>
                 )}
             </div>
-            <Footer />
             
             {/* Hou' Gallery Modal */}
             {showGallery && (

@@ -11,6 +11,9 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+    const [touchStart, setTouchStart] = useState<{ x: number; y: number; time: number } | null>(null);
+    const [swipeStart, setSwipeStart] = useState<{ x: number; y: number } | null>(null);
+    const [swipeOffset, setSwipeOffset] = useState<number>(0);
 
     useEffect(() => {
         const loadGalleryImages = async () => {
@@ -32,15 +35,22 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
 
     // Navigation functions
     const openImageViewer = (index: number) => {
+        console.log('Opening image viewer for index:', index); // Debug log
         setSelectedImageIndex(index);
         // Prevent body scroll when modal is open
         document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.height = '100%';
     };
 
     const closeImageViewer = () => {
         setSelectedImageIndex(null);
         // Restore body scroll when modal closes
         document.body.style.overflow = 'unset';
+        document.body.style.position = 'unset';
+        document.body.style.width = 'unset';
+        document.body.style.height = 'unset';
     };
 
     const goToPrevious = () => {
@@ -81,6 +91,9 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
     useEffect(() => {
         return () => {
             document.body.style.overflow = 'unset';
+            document.body.style.position = 'unset';
+            document.body.style.width = 'unset';
+            document.body.style.height = 'unset';
         };
     }, []);
 
@@ -247,14 +260,67 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.1 }}
-                                    className="bg-white rounded-lg p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer"
+                                    className="bg-white rounded-lg p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer touch-manipulation"
                                     onClick={() => openImageViewer(index)}
+                                    onTouchStart={(e) => {
+                                        const touch = e.touches[0];
+                                        setTouchStart({
+                                            x: touch.clientX,
+                                            y: touch.clientY,
+                                            time: Date.now()
+                                        });
+                                        // Slight visual feedback for touch start
+                                        e.currentTarget.style.transform = 'scale(0.99)';
+                                    }}
+                                    onTouchEnd={(e) => {
+                                        e.currentTarget.style.transform = '';
+                                        
+                                        if (!touchStart) return;
+                                        
+                                        const touch = e.changedTouches[0];
+                                        const deltaX = Math.abs(touch.clientX - touchStart.x);
+                                        const deltaY = Math.abs(touch.clientY - touchStart.y);
+                                        const deltaTime = Date.now() - touchStart.time;
+                                        
+                                        // Only consider it a tap if:
+                                        // 1. Touch was brief (less than 300ms)
+                                        // 2. Minimal movement (less than 10px in any direction)
+                                        const isTap = deltaTime < 300 && deltaX < 10 && deltaY < 10;
+                                        
+                                        if (isTap) {
+                                            e.preventDefault();
+                                            openImageViewer(index);
+                                        }
+                                        
+                                        setTouchStart(null);
+                                    }}
+                                    onTouchCancel={(e) => {
+                                        e.currentTarget.style.transform = '';
+                                        setTouchStart(null);
+                                    }}
+                                    onTouchMove={(e) => {
+                                        // If user is moving significantly, reset visual feedback
+                                        if (touchStart) {
+                                            const touch = e.touches[0];
+                                            const deltaX = Math.abs(touch.clientX - touchStart.x);
+                                            const deltaY = Math.abs(touch.clientY - touchStart.y);
+                                            
+                                            if (deltaX > 5 || deltaY > 5) {
+                                                e.currentTarget.style.transform = '';
+                                            }
+                                        }
+                                    }}
+                                    style={{ 
+                                        WebkitTapHighlightColor: 'transparent',
+                                        touchAction: 'manipulation'
+                                    }}
                                 >
                                     <div className="aspect-[4/5] overflow-hidden rounded-md mb-3 bg-neutral-100">
                                         <img
                                             src={image.generatedImageUrl}
                                             alt={`${image.styleName} by ${image.userName}`}
-                                            className="w-full h-full object-contain"
+                                            className="w-full h-full object-contain pointer-events-none"
+                                            draggable={false}
                                         />
                                     </div>
                                     <div className="text-center">
@@ -291,9 +357,14 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
                         right: 0, 
                         bottom: 0,
                         width: '100vw',
-                        height: '100vh'
+                        height: '100vh',
+                        overflowY: 'hidden' // Prevent background scroll
                     }}
                     onClick={closeImageViewer}
+                    onTouchMove={(e) => {
+                        // Prevent all background scrolling when modal is open
+                        e.preventDefault();
+                    }}
                 >
                         {/* Close Button */}
                         <button
@@ -344,11 +415,74 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
                         <div 
                             className="w-full h-full flex items-center justify-center px-2 py-4 md:px-4 md:py-8"
                             onClick={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => {
+                                // Only handle swipes on mobile
+                                if (window.innerWidth <= 768) {
+                                    const touch = e.touches[0];
+                                    setSwipeStart({
+                                        x: touch.clientX,
+                                        y: touch.clientY
+                                    });
+                                }
+                            }}
+                            onTouchMove={(e) => {
+                                // Prevent all scrolling in modal on mobile
+                                if (window.innerWidth <= 768) {
+                                    e.preventDefault(); // Prevent background scrolling
+                                    
+                                    if (swipeStart) {
+                                        const touch = e.touches[0];
+                                        const deltaX = touch.clientX - swipeStart.x;
+                                        const deltaY = Math.abs(touch.clientY - swipeStart.y);
+                                        
+                                        // Only track horizontal movement if it's more horizontal than vertical
+                                        if (Math.abs(deltaX) > deltaY) {
+                                            setSwipeOffset(deltaX * 0.3); // Dampen the movement for subtle feedback
+                                        }
+                                    }
+                                }
+                            }}
+                            onTouchEnd={(e) => {
+                                // Only handle swipes on mobile
+                                if (window.innerWidth <= 768 && swipeStart) {
+                                    const touch = e.changedTouches[0];
+                                    const deltaX = touch.clientX - swipeStart.x;
+                                    const deltaY = Math.abs(touch.clientY - swipeStart.y);
+                                    
+                                    // Reset visual feedback
+                                    setSwipeOffset(0);
+                                    
+                                    // Check if it's a horizontal swipe (more horizontal than vertical movement)
+                                    // and the swipe is significant enough (at least 50px)
+                                    if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > deltaY) {
+                                        if (deltaX > 0) {
+                                            // Swipe right - go to previous image
+                                            goToPrevious();
+                                        } else {
+                                            // Swipe left - go to next image
+                                            goToNext();
+                                        }
+                                    }
+                                    
+                                    setSwipeStart(null);
+                                }
+                            }}
+                            onTouchCancel={() => {
+                                setSwipeStart(null);
+                                setSwipeOffset(0);
+                            }}
+                            style={{
+                                touchAction: 'none' // Prevent all default touch behaviors in modal
+                            }}
                         >
                             <motion.div
                                 key={selectedImageIndex}
                                 initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
+                                animate={{ 
+                                    scale: 1, 
+                                    opacity: 1,
+                                    x: swipeOffset 
+                                }}
                                 exit={{ scale: 0.8, opacity: 0 }}
                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                 className="bg-white rounded-lg p-3 md:p-6 shadow-2xl max-w-4xl max-h-[90vh] w-full mx-auto flex flex-col overflow-hidden"

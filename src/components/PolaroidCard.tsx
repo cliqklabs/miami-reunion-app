@@ -29,11 +29,17 @@ const LoadingSpinner = () => (
     </div>
 );
 
-const ErrorDisplay = () => (
-    <div className="flex items-center justify-center h-full">
-         <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+const ErrorDisplay = ({ isMobile }: { isMobile?: boolean }) => (
+    <div className="flex flex-col items-center justify-center h-full text-center px-4">
+         <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-red-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
+        <p className="text-red-500 text-xs font-permanent-marker mb-1">Generation Failed</p>
+        {!isMobile && (
+            <p className="text-neutral-600 text-xs font-permanent-marker">
+                Shake to retry
+            </p>
+        )}
     </div>
 );
 
@@ -92,8 +98,8 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
     const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         if (!onShake || isMobile) return;
 
-        const velocityThreshold = 800; // Lowered threshold for easier shake detection
-        const shakeCooldown = 1500; // Reduced cooldown for better responsiveness
+        const velocityThreshold = 1500; // Increased threshold to require more vigorous movement
+        const shakeCooldown = 2000; // Increased cooldown to prevent accidental rapid triggers
 
         const { x, y } = info.velocity;
         const { x: prevX, y: prevY } = lastVelocity.current;
@@ -102,14 +108,16 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
         // Calculate velocity magnitude
         const magnitude = Math.sqrt(x * x + y * y);
         
-        // Check for rapid back-and-forth movement (shake)
+        // Check for rapid back-and-forth movement (shake) - made much more strict
         const dotProduct = (x * prevX) + (y * prevY);
-        const isDirectionChange = dotProduct < -100; // More sensitive direction change detection
+        const isDirectionChange = dotProduct < -500; // Much stricter direction change requirement
         
-        // Also detect rapid movement regardless of direction for easier triggering
+        // Require both rapid movement AND direction change for shake detection
         const isRapidMovement = magnitude > velocityThreshold;
 
-        if ((isRapidMovement && isDirectionChange) || magnitude > velocityThreshold * 1.5) {
+        // Removed the easy trigger option - now requires BOTH rapid movement AND direction change
+        // Also increased the fallback threshold significantly
+        if ((isRapidMovement && isDirectionChange) || magnitude > velocityThreshold * 2.5) {
             if (now - lastShakeTime.current > shakeCooldown) {
                 lastShakeTime.current = now;
                 console.log('Shake detected for:', caption, 'velocity:', magnitude);
@@ -124,7 +132,29 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
         <>
             <div className="w-full bg-neutral-900 shadow-inner aspect-[4/5] relative overflow-hidden group">
                 {status === 'pending' && <LoadingSpinner />}
-                {status === 'error' && <ErrorDisplay />}
+                {status === 'error' && (
+                    <>
+                        <ErrorDisplay isMobile={isMobile} />
+                        {/* Mobile retry button for error cards */}
+                        {isMobile && onShake && (
+                            <div className="absolute top-2 right-2 z-20">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        console.log('Mobile retry clicked for:', caption);
+                                        onShake(caption);
+                                    }}
+                                    className="p-2 bg-red-600/80 rounded-full text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 shadow-lg"
+                                    aria-label={`Retry generation for ${caption}`}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.899 2.186l-1.42.71a5.002 5.002 0 00-8.479-1.554H10a1 1 0 110 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm12 14a1 1 0 01-1-1v-2.101a7.002 7.002 0 01-11.899-2.186l1.42-.71a5.002 5.002 0 008.479 1.554H10a1 1 0 110-2h6a1 1 0 011 1v6a1 1 0 01-1 1z" clipRule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        )}
+                    </>
+                )}
                 {status === 'done' && imageUrl && (
                     <>
                         <div className={cn(
@@ -242,7 +272,8 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
     );
 
     // For non-draggable cards (like upload placeholder), use static container
-    const shouldBeDraggable = status === 'done' && imageUrl && !isMobile;
+    // Allow dragging for both successful and error cards to enable shake-to-retry
+    const shouldBeDraggable = (status === 'done' || status === 'error') && !isMobile;
 
     if (isMobile || !shouldBeDraggable) {
         return (
