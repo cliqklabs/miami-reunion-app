@@ -101,7 +101,7 @@ export const saveGeneratedImage = async (
       originalImageUrl,
       generatedImageUrl,
       timestamp: Timestamp.now(),
-      inGallery: true,
+      inGallery: false, // Fixed: Only hearts should add to gallery
     };
 
     const docRef = await addDoc(collection(db, 'images'), imageData);

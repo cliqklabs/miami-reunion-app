@@ -1,5 +1,5 @@
 // Generic style structure for the Miami Reunion app
-export const STYLE_COUNT = 4;
+export const STYLE_COUNT = 5;
 
 export const STYLES = {
   style1: {
@@ -21,6 +21,11 @@ export const STYLES = {
     id: 'style4',
     displayName: 'Style 4',
     order: 4
+  },
+    style5: {
+    id: 'style5',
+    displayName: 'Style 5',
+    order: 5   
   }
 };
 

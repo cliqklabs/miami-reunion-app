@@ -112,7 +112,7 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
 
     const cardInnerContent = (
         <>
-            <div className="w-full bg-neutral-900 shadow-inner flex-grow relative overflow-hidden group">
+            <div className="w-full bg-neutral-900 shadow-inner aspect-[4/5] relative overflow-hidden group">
                 {status === 'pending' && <LoadingSpinner />}
                 {status === 'error' && <ErrorDisplay />}
                 {status === 'done' && imageUrl && (
@@ -181,7 +181,7 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
                                 console.error('Failed to load image:', imageUrl);
                                 setIsImageLoaded(false);
                             }}
-                            className={`w-full h-full object-cover object-center transition-all duration-[2000ms] ease-in-out ${
+                            className={`w-full h-full object-contain object-center transition-all duration-[2000ms] ease-in-out ${
                                 isDeveloped
                                 ? 'opacity-100 filter-none'
                                 : 'opacity-70 filter sepia(0.3) contrast(0.9) brightness(0.9)'

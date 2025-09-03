@@ -374,7 +374,7 @@ function App() {
             )}
 
             <div className="z-10 flex flex-col items-center justify-center w-full h-full flex-1 min-h-0">
-                <div className="text-center mb-10">
+                <div className={`text-center mb-10 ${appState !== 'name-entry' ? 'mt-16 md:mt-0' : ''}`}>
                     <h1 className="text-5xl md:text-7xl font-caveat font-bold text-neutral-100">Casa Cardinal</h1>
                     <p className="font-permanent-marker text-neutral-300 mt-2 text-lg tracking-wide">Miami Hou' 2025</p>
                     <p className="font-permanent-marker text-neutral-400 mt-1 text-base tracking-wide">{currentTheme.subtitle}</p>
