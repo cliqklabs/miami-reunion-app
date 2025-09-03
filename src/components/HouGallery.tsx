@@ -84,6 +84,102 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
         };
     }, []);
 
+    // Download function for gallery images
+    const handleDownloadImage = async (image: GeneratedImage) => {
+        try {
+            console.log('Downloading original image from gallery:', image.styleName);
+            
+            // Fetch the image as a blob to ensure proper download behavior
+            const response = await fetch(image.generatedImageUrl);
+            const blob = await response.blob();
+            
+            // Create object URL from blob
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // Create download link with enhanced attributes to prevent navigation
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `casa-cardinal-${image.styleName.toLowerCase().replace(/\s+/g, '-')}-${image.userName}.jpg`;
+            link.style.display = 'none';
+            link.rel = 'noopener noreferrer'; // Security and prevent navigation
+            link.target = '_self'; // Ensure same window behavior
+            
+            // Prevent default behavior and force download
+            const clickEvent = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window
+            });
+            
+            // Add to DOM, trigger download, and immediately remove
+            document.body.appendChild(link);
+            link.dispatchEvent(clickEvent);
+            
+            // Use setTimeout to ensure download starts before cleanup
+            setTimeout(() => {
+                document.body.removeChild(link);
+                URL.revokeObjectURL(blobUrl);
+            }, 100);
+            
+            console.log('Gallery original image downloaded successfully:', image.styleName);
+        } catch (error) {
+            console.error('Failed to download image:', error);
+            // Enhanced fallback method
+            const link = document.createElement('a');
+            link.href = image.generatedImageUrl;
+            link.download = `casa-cardinal-${image.styleName.toLowerCase().replace(/\s+/g, '-')}-${image.userName}.jpg`;
+            link.rel = 'noopener noreferrer';
+            link.target = '_blank'; // Use _blank with download attribute to force download
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            
+            // Prevent navigation by stopping propagation
+            const clickEvent = new MouseEvent('click', {
+                bubbles: false,
+                cancelable: true,
+                view: window
+            });
+            
+            link.dispatchEvent(clickEvent);
+            
+            setTimeout(() => {
+                document.body.removeChild(link);
+            }, 100);
+        }
+    };
+
+    // Share function using Web Share API
+    const handleShareImage = async (image: GeneratedImage) => {
+        try {
+            // Convert original image URL to blob for sharing
+            const response = await fetch(image.generatedImageUrl);
+            const blob = await response.blob();
+            
+            // Create file for sharing
+            const file = new File([blob], `casa-cardinal-${image.styleName.toLowerCase().replace(/\s+/g, '-')}-${image.userName}.jpg`, {
+                type: 'image/jpeg'
+            });
+
+            // Use Web Share API
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: `Casa Cardinal - ${image.styleName}`,
+                    text: `Check out my Miami ${image.styleName} transformation! 🏖️`,
+                    files: [file]
+                });
+            } else {
+                // Fallback: just download the image
+                console.warn('Web Share API not supported, falling back to download');
+                handleDownloadImage(image);
+            }
+        } catch (error) {
+            console.error('Failed to share image:', error);
+            // Fallback to download
+            handleDownloadImage(image);
+        }
+    };
+
     if (loading) {
         return (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -246,7 +342,7 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
 
                         {/* Image Container */}
                         <div 
-                            className="w-full h-full flex items-center justify-center px-4 py-8"
+                            className="w-full h-full flex items-center justify-center px-2 py-4 md:px-4 md:py-8"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <motion.div
@@ -255,29 +351,61 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
                                 animate={{ scale: 1, opacity: 1 }}
                                 exit={{ scale: 0.8, opacity: 0 }}
                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                className="bg-white rounded-lg p-6 shadow-2xl max-w-4xl max-h-[85vh] w-full mx-auto flex flex-col"
+                                className="bg-white rounded-lg p-3 md:p-6 shadow-2xl max-w-4xl max-h-[90vh] w-full mx-auto flex flex-col overflow-hidden"
                             >
-                                {/* Full-size Polaroid Frame */}
-                                <div className="aspect-[4/5] w-full max-w-lg mx-auto bg-neutral-100 rounded-md flex-shrink-0">
+                                {/* Full-size Polaroid Frame - Responsive sizing */}
+                                <div className="w-full max-w-xs md:max-w-sm lg:max-w-lg mx-auto bg-neutral-100 rounded-md flex-shrink min-h-0" style={{ aspectRatio: '4/5' }}>
                                     <img
                                         src={images[selectedImageIndex].generatedImageUrl}
                                         alt={`${images[selectedImageIndex].styleName} by ${images[selectedImageIndex].userName}`}
-                                        className="w-full h-full object-contain rounded-md"
+                                        className="w-full h-full object-cover rounded-md"
                                     />
                                 </div>
                                 
                                 {/* Image Info */}
-                                <div className="text-center mt-3 space-y-1 flex-shrink-0">
-                                    <h3 className="font-permanent-marker text-xl text-black">
+                                <div className="text-center mt-1 md:mt-2 space-y-0.5 md:space-y-1 flex-shrink-0">
+                                    <h3 className="font-permanent-marker text-lg md:text-xl text-black">
                                         {images[selectedImageIndex].styleName}
                                     </h3>
-                                    <p className="text-neutral-600 text-base">
+                                    <p className="text-neutral-600 text-sm md:text-base">
                                         by {images[selectedImageIndex].userName}
                                     </p>
-                                    <div className="flex justify-center items-center gap-4 text-sm text-neutral-500">
+                                    <div className="flex justify-center items-center gap-2 md:gap-4 text-xs md:text-sm text-neutral-500">
                                         <span>{images[selectedImageIndex].timestamp.toLocaleDateString()}</span>
                                         <span>•</span>
                                         <span>{selectedImageIndex + 1} of {images.length}</span>
+                                    </div>
+                                    
+                                    {/* Download and Share Buttons */}
+                                    <div className="flex justify-center gap-2 md:gap-3 mt-1.5 md:mt-3 pb-1">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDownloadImage(images[selectedImageIndex]);
+                                            }}
+                                            className="bg-orange-500 hover:bg-orange-600 text-white px-3 md:px-4 py-2 rounded-lg font-permanent-marker text-xs md:text-sm transition-colors flex items-center gap-1 md:gap-2"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                            </svg>
+                                            Download
+                                        </button>
+                                        
+                                        {/* Web Share API Button - Mobile Only */}
+                                        {navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleShareImage(images[selectedImageIndex]);
+                                                }}
+                                                className="bg-purple-600 hover:bg-purple-700 text-white px-3 md:px-4 py-2 rounded-lg font-permanent-marker text-xs md:text-sm transition-colors flex items-center gap-1 md:gap-2"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                                                </svg>
+                                                Share
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>

@@ -17,6 +17,7 @@ interface PolaroidCardProps {
     onSaveToGallery?: (caption: string) => void;
     isSavedToGallery?: boolean;
     isMobile?: boolean;
+    isInFront?: boolean;
 }
 
 const LoadingSpinner = () => (
@@ -47,7 +48,9 @@ const Placeholder = () => (
 );
 
 
-const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, error, dragConstraintsRef, onShake, onDownload, onSaveToGallery, isSavedToGallery = false, isMobile }) => {
+
+
+const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, error, dragConstraintsRef, onShake, onDownload, onSaveToGallery, isSavedToGallery = false, isMobile, isInFront = false }) => {
     const [isDeveloped, setIsDeveloped] = useState(false);
     const [isImageLoaded, setIsImageLoaded] = useState(false);
     const lastShakeTime = useRef(0);
@@ -89,22 +92,29 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
     const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         if (!onShake || isMobile) return;
 
-        const velocityThreshold = 1500; // Require a high velocity to be considered a "shake".
-        const shakeCooldown = 2000; // 2 seconds cooldown to prevent spamming.
+        const velocityThreshold = 800; // Lowered threshold for easier shake detection
+        const shakeCooldown = 1500; // Reduced cooldown for better responsiveness
 
         const { x, y } = info.velocity;
         const { x: prevX, y: prevY } = lastVelocity.current;
         const now = Date.now();
 
-        // A true "shake" is a rapid movement AND a sharp change in direction.
-        // We detect this by checking if the velocity is high and if its direction
-        // has reversed from the last frame (i.e., the dot product is negative).
+        // Calculate velocity magnitude
         const magnitude = Math.sqrt(x * x + y * y);
+        
+        // Check for rapid back-and-forth movement (shake)
         const dotProduct = (x * prevX) + (y * prevY);
+        const isDirectionChange = dotProduct < -100; // More sensitive direction change detection
+        
+        // Also detect rapid movement regardless of direction for easier triggering
+        const isRapidMovement = magnitude > velocityThreshold;
 
-        if (magnitude > velocityThreshold && dotProduct < 0 && (now - lastShakeTime.current > shakeCooldown)) {
-            lastShakeTime.current = now;
-            onShake(caption);
+        if ((isRapidMovement && isDirectionChange) || magnitude > velocityThreshold * 1.5) {
+            if (now - lastShakeTime.current > shakeCooldown) {
+                lastShakeTime.current = now;
+                console.log('Shake detected for:', caption, 'velocity:', magnitude);
+                onShake(caption);
+            }
         }
 
         lastVelocity.current = { x, y };
@@ -155,9 +165,10 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
+                                        console.log('Mobile regenerate clicked for:', caption);
                                         onShake(caption);
                                     }}
-                                    className="p-2 bg-black/50 rounded-full text-white hover:bg-black/75 focus:outline-none focus:ring-2 focus:ring-white"
+                                    className="p-2 bg-purple-600/80 rounded-full text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 shadow-lg"
                                     aria-label={`Regenerate image for ${caption}`}
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -206,6 +217,8 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
                             </div>
                         )}
 
+
+
                         {/* The developing chemical overlay - fades out */}
                         <div
                             className={`absolute inset-0 z-10 bg-gradient-to-b from-transparent via-[#3a322c]/30 to-transparent transition-opacity duration-[2000ms] ease-out ${
@@ -233,7 +246,7 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
 
     if (isMobile || !shouldBeDraggable) {
         return (
-            <div className="bg-neutral-100 dark:bg-neutral-100 !p-4 !pb-16 flex flex-col items-center justify-start aspect-[3/4] w-80 max-w-full rounded-md shadow-lg relative">
+            <div className={`bg-neutral-100 dark:bg-neutral-100 !p-4 !pb-16 flex flex-col items-center justify-start aspect-[3/4] w-80 max-w-full rounded-md shadow-lg relative ${isInFront ? 'ring-2 ring-orange-400 ring-opacity-60' : ''}`}>
                 {cardInnerContent}
             </div>
         );
@@ -242,7 +255,7 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
     return (
         <DraggableCardContainer>
             <DraggableCardBody
-                className="bg-neutral-100 dark:bg-neutral-100 !p-4 !pb-16 flex flex-col items-center justify-start aspect-[3/4] w-80 max-w-full"
+                className={`bg-neutral-100 dark:bg-neutral-100 !p-4 !pb-16 flex flex-col items-center justify-start aspect-[3/4] w-80 max-w-full ${isInFront ? 'ring-2 ring-orange-400 ring-opacity-60 rounded-md' : ''}`}
                 dragConstraintsRef={dragConstraintsRef}
                 onDragStart={handleDragStart}
                 onDrag={handleDrag}

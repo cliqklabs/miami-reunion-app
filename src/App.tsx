@@ -65,6 +65,7 @@ function App() {
     const [appState, setAppState] = useState<AppState>('name-entry');
     const [firebaseEnabled, setFirebaseEnabled] = useState<boolean>(false);
     const [showGallery, setShowGallery] = useState<boolean>(false);
+    const [frontCardIndex, setFrontCardIndex] = useState<number>(-1); // Track which card should be in front
     const dragAreaRef = useRef<HTMLDivElement>(null);
     const isMobile = useMediaQuery('(max-width: 768px)');
     const currentTheme = getCurrentTheme();
@@ -161,14 +162,21 @@ function App() {
                     ...prev,
                     [styleKey]: { status: 'done', url: resultUrl },
                 }));
-            } catch (err) {
-                const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
-                setGeneratedImages(prev => ({
-                    ...prev,
-                    [styleKey]: { status: 'error', error: errorMessage },
-                }));
-                console.error(`Failed to generate image for ${styleKey}:`, err);
+                    } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
+            
+            // Check if it's a network error and provide user-friendly message
+            let userMessage = errorMessage;
+            if (errorMessage.includes('Failed to fetch') || errorMessage.includes('QUIC_PROTOCOL_ERROR')) {
+                userMessage = "Network connection issue. Please check your internet and try again.";
             }
+            
+            setGeneratedImages(prev => ({
+                ...prev,
+                [styleKey]: { status: 'error', error: userMessage },
+            }));
+            console.error(`Failed to generate image for ${styleKey}:`, err);
+        }
         };
 
         const workers = Array(concurrencyLimit).fill(null).map(async () => {
@@ -186,25 +194,47 @@ function App() {
         setAppState('results-shown');
     };
 
-    const handleRegenerateStyle = async (styleKey: string) => {
+    const handleRegenerateStyle = async (styleNameOrKey: string) => {
         if (!uploadedImage) return;
+
+        // Convert style name to style key if needed
+        let styleKey = styleNameOrKey;
+        
+        // If we received a style name (like "Drug Lord"), convert to style key (like "style1")
+        if (!currentTheme.styles[styleNameOrKey]) {
+            styleKey = Object.keys(currentTheme.styles).find(key => 
+                currentTheme.styles[key].name === styleNameOrKey
+            ) || styleNameOrKey;
+        }
 
         // Prevent re-triggering if a generation is already in progress
         if (generatedImages[styleKey]?.status === 'pending') {
             return;
         }
 
-        console.log(`Regenerating image for ${styleKey}...`);
+        console.log(`Regenerating image for ${styleKey} (${styleNameOrKey})...`);
 
-        // Set the specific style to 'pending' to show the loading spinner
-        setGeneratedImages(prev => ({
-            ...prev,
-            [styleKey]: { status: 'pending' },
-        }));
+        // Verify the style config exists
+        const styleConfig = currentTheme.styles[styleKey];
+        if (!styleConfig) {
+            console.error(`Style config not found for: ${styleKey}`);
+            return;
+        }
+
+                    // Set the specific style to 'pending' to show the loading spinner
+            setGeneratedImages(prev => ({
+                ...prev,
+                [styleKey]: { status: 'pending' },
+            }));
+
+            // Clear the gallery status for this style since it's a new image
+            setSavedToGallery(prev => ({
+                ...prev,
+                [styleKey]: false
+            }));
 
         // Call the generation service for the specific style
         try {
-            const styleConfig = currentTheme.styles[styleKey];
             const prompt = styleConfig.prompt;
             const resultUrl = await generateMiamiImage(uploadedImage, prompt);
 
@@ -230,9 +260,16 @@ function App() {
             }));
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
+            
+            // Check if it's a network error and provide user-friendly message
+            let userMessage = errorMessage;
+            if (errorMessage.includes('Failed to fetch') || errorMessage.includes('QUIC_PROTOCOL_ERROR')) {
+                userMessage = "Network connection issue. Please check your internet and try again.";
+            }
+            
             setGeneratedImages(prev => ({
                 ...prev,
-                [styleKey]: { status: 'error', error: errorMessage },
+                [styleKey]: { status: 'error', error: userMessage },
             }));
             console.error(`Failed to regenerate image for ${styleKey}:`, err);
         }
@@ -291,14 +328,22 @@ function App() {
         setShowGallery(false);
     };
 
+    const handleCardClick = (index: number) => {
+        // Bring clicked card to front
+        setFrontCardIndex(index);
+    };
+
     const handleReset = () => {
         setUploadedImage(null);
         setGeneratedImages({});
         setSavedToGallery({});
+        setFrontCardIndex(-1); // Reset front card selection
         setAppState('idle');
     };
 
-    const handleDownloadIndividualImage = (styleName: string) => {
+
+
+    const handleDownloadIndividualImage = async (styleName: string) => {
         // Find the styleKey from the style name
         const styleKey = Object.keys(currentTheme.styles).find(key => 
             currentTheme.styles[key].name === styleName
@@ -311,16 +356,67 @@ function App() {
 
         const image = generatedImages[styleKey];
         if (image?.status === 'done' && image.url) {
-            console.log('Downloading individual image:', styleName, image.url);
-            
-            // Create download link
-            const link = document.createElement('a');
-            link.href = image.url;
-            link.download = `casa-cardinal-${styleName.toLowerCase()}-${userName}.jpg`;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            try {
+                console.log('Downloading original image:', styleName);
+                
+                // Fetch the image as a blob to ensure proper download behavior
+                const response = await fetch(image.url);
+                const blob = await response.blob();
+                
+                // Create object URL from blob
+                const blobUrl = URL.createObjectURL(blob);
+                
+                // Create download link with enhanced attributes to prevent navigation
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = `casa-cardinal-${styleName.toLowerCase().replace(/\s+/g, '-')}-${userName}.jpg`;
+                link.style.display = 'none';
+                link.rel = 'noopener noreferrer'; // Security and prevent navigation
+                link.target = '_self'; // Ensure same window behavior
+                
+                // Prevent default behavior and force download
+                const clickEvent = new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window
+                });
+                
+                // Add to DOM, trigger download, and immediately remove
+                document.body.appendChild(link);
+                link.dispatchEvent(clickEvent);
+                
+                // Use setTimeout to ensure download starts before cleanup
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(blobUrl);
+                }, 100);
+                
+                console.log('Original image downloaded successfully:', styleName);
+            } catch (error) {
+                console.error('Failed to download image:', error);
+                // Enhanced fallback method
+                const link = document.createElement('a');
+                link.href = image.url;
+                link.download = `casa-cardinal-${styleName.toLowerCase().replace(/\s+/g, '-')}-${userName}.jpg`;
+                link.rel = 'noopener noreferrer';
+                link.target = '_blank'; // Use _blank with download attribute to force download
+                link.style.display = 'none';
+                
+                document.body.appendChild(link);
+                
+                // Prevent navigation by stopping propagation
+                const clickEvent = new MouseEvent('click', {
+                    bubbles: false,
+                    cancelable: true,
+                    view: window
+                });
+                
+                link.dispatchEvent(clickEvent);
+                
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                }, 100);
+            }
         } else {
             console.error('Image not ready for download:', styleName, image);
         }
@@ -360,8 +456,60 @@ function App() {
     };
 
     return (
-        <main className="bg-gradient-to-br from-teal-900 via-blue-900 to-indigo-900 text-neutral-200 min-h-screen w-full flex flex-col items-center justify-center p-4 pb-24 overflow-hidden relative">
-            <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.05]"></div>
+        <main className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 pb-24 overflow-hidden text-neutral-200">
+            {/* Miami Vice Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-b from-purple-900 via-purple-700 to-pink-500"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-orange-400 via-pink-400/50 to-transparent"></div>
+            
+            {/* Palm Tree Silhouettes */}
+            <div className="absolute bottom-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                {/* Left Palm Tree */}
+                <div className="absolute bottom-0 left-8 w-32 h-96 opacity-60">
+                    {/* Palm trunk */}
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-3 h-48 bg-gradient-to-t from-purple-900 to-purple-800 rounded-t-lg"></div>
+                    {/* Palm fronds */}
+                    <div className="absolute bottom-40 left-1/2 transform -translate-x-1/2 -translate-y-8">
+                        <div className="absolute w-20 h-2 bg-purple-900 rounded-full transform -rotate-45 origin-right"></div>
+                        <div className="absolute w-24 h-2 bg-purple-900 rounded-full transform -rotate-12 origin-right"></div>
+                        <div className="absolute w-22 h-2 bg-purple-900 rounded-full transform rotate-12 origin-left"></div>
+                        <div className="absolute w-20 h-2 bg-purple-900 rounded-full transform rotate-45 origin-left"></div>
+                        <div className="absolute w-18 h-2 bg-purple-900 rounded-full transform -rotate-75 origin-right"></div>
+                        <div className="absolute w-18 h-2 bg-purple-900 rounded-full transform rotate-75 origin-left"></div>
+                    </div>
+                </div>
+                
+                {/* Right Palm Tree */}
+                <div className="absolute bottom-0 right-12 w-40 h-full opacity-50">
+                    {/* Palm trunk */}
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-64 bg-gradient-to-t from-orange-900 to-orange-800 rounded-t-lg"></div>
+                    {/* Palm fronds */}
+                    <div className="absolute bottom-56 left-1/2 transform -translate-x-1/2 -translate-y-8">
+                        <div className="absolute w-24 h-2 bg-orange-900 rounded-full transform -rotate-45 origin-right"></div>
+                        <div className="absolute w-28 h-2 bg-orange-900 rounded-full transform -rotate-20 origin-right"></div>
+                        <div className="absolute w-26 h-2 bg-orange-900 rounded-full transform rotate-20 origin-left"></div>
+                        <div className="absolute w-24 h-2 bg-orange-900 rounded-full transform rotate-45 origin-left"></div>
+                        <div className="absolute w-20 h-2 bg-orange-900 rounded-full transform -rotate-70 origin-right"></div>
+                        <div className="absolute w-20 h-2 bg-orange-900 rounded-full transform rotate-70 origin-left"></div>
+                        <div className="absolute w-22 h-2 bg-orange-900 rounded-full transform rotate-90 origin-center"></div>
+                    </div>
+                </div>
+            </div>
+            
+            {/* Neon Light Streaks */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {/* Top right streak */}
+                <div className="absolute top-16 right-20 w-32 h-1 bg-gradient-to-r from-transparent via-pink-400 to-transparent transform rotate-45 opacity-80 shadow-lg shadow-pink-400/50"></div>
+                {/* Middle left streak */}
+                <div className="absolute top-40 left-16 w-24 h-1 bg-gradient-to-r from-transparent via-purple-300 to-transparent transform -rotate-45 opacity-60 shadow-lg shadow-purple-300/50"></div>
+                {/* Bottom right streak */}
+                <div className="absolute bottom-32 right-32 w-20 h-1 bg-gradient-to-r from-transparent via-orange-300 to-transparent transform rotate-12 opacity-70 shadow-lg shadow-orange-300/50"></div>
+                {/* Additional small streaks */}
+                <div className="absolute top-24 right-40 w-16 h-0.5 bg-gradient-to-r from-transparent via-pink-300 to-transparent transform rotate-30 opacity-60"></div>
+                <div className="absolute bottom-48 left-24 w-12 h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent transform -rotate-60 opacity-50"></div>
+            </div>
+            
+            {/* Subtle grid overlay */}
+            <div className="absolute inset-0 bg-grid-white/[0.02]"></div>
             
             {/* View Hou' Gallery Button - Top Right */}
             {appState !== 'name-entry' && (
@@ -430,6 +578,17 @@ function App() {
                             <p className="mt-4 text-sm text-neutral-400">
                                 Welcome, {userName}!
                             </p>
+                            {firebaseEnabled && (
+                                <motion.button 
+                                    onClick={() => setShowGallery(true)}
+                                    className={`${secondaryButtonClasses} mt-6`}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 2.5, duration: 0.5 }}
+                                >
+                                    View Hou' Gallery
+                                </motion.button>
+                            )}
                         </motion.div>
                     </div>
                 )}
@@ -480,11 +639,18 @@ function App() {
                                 {MIAMI_STYLES_KEYS.map((styleKey, index) => {
                                     const styleConfig = currentTheme.styles[styleKey];
                                     const { top, left, rotate } = POSITIONS[index] || { top: '20%', left: '20%', rotate: 0 };
+                                    const isInFront = frontCardIndex === index;
                                     return (
                                         <motion.div
                                             key={styleKey}
                                             className="absolute cursor-grab active:cursor-grabbing"
-                                            style={{ top, left }}
+                                            style={{ 
+                                                top, 
+                                                left,
+                                                zIndex: isInFront ? 100 : (index === 0 ? 80 : index === 2 ? 60 : 20 + (index * 5)), // Special z-index for Drug Lord (index 0) and Cocaine Cowboy (index 2)
+                                                // Add padding around card for easier clicking - extra for Drug Lord
+                                                padding: index === 0 ? '30px' : '20px'
+                                            }}
                                             initial={{ opacity: 0, scale: 0.5, y: 100, rotate: 0 }}
                                             animate={{
                                                 opacity: 1,
@@ -493,6 +659,16 @@ function App() {
                                                 rotate: `${rotate}deg`,
                                             }}
                                             transition={{ type: 'spring', stiffness: 100, damping: 20, delay: index * 0.15 }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                console.log(`Card ${index} (${styleConfig.name}) clicked, bringing to front. Current z-index: ${isInFront ? 100 : (index === 0 ? 80 : index === 2 ? 60 : 20 + (index * 5))}`);
+                                                handleCardClick(index);
+                                            }}
+                                            onMouseDown={(e) => {
+                                                // Ensure this card comes to front on any interaction
+                                                e.stopPropagation();
+                                                handleCardClick(index);
+                                            }}
                                         >
                                                                                         <PolaroidCard 
                                                 dragConstraintsRef={dragAreaRef}
@@ -505,6 +681,7 @@ function App() {
                                                 onSaveToGallery={handleSaveToGallery}
                                                 isSavedToGallery={savedToGallery[styleKey]}
                                                 isMobile={isMobile}
+                                                isInFront={isInFront}
                                             />
                                         </motion.div>
                                     );
@@ -527,6 +704,14 @@ function App() {
                                         >
                                             {isDownloading ? 'Creating...' : 'Download'}
                                         </button>
+                                        {firebaseEnabled && (
+                                            <button 
+                                                onClick={() => setShowGallery(true)}
+                                                className={secondaryButtonClasses}
+                                            >
+                                                View Gallery
+                                            </button>
+                                        )}
                                         <button onClick={handleReset} className={secondaryButtonClasses}>
                                             Start Over
                                         </button>
