@@ -64,9 +64,9 @@ const NameEntry: React.FC<NameEntryProps> = ({ onSubmit }) => {
 
                 <button
                     type="submit"
-                    className="w-full font-permanent-marker text-xl text-center text-black bg-gradient-to-r from-orange-400 to-pink-500 py-4 px-8 rounded-lg transform transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25 active:scale-95"
+                    className="w-full font-permanent-marker text-2xl text-center text-black bg-gradient-to-r from-orange-400 to-pink-500 py-4 px-8 rounded-lg transform transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25 active:scale-95"
                 >
-                    Start Creating
+                    OH YEE!
                 </button>
             </form>
 

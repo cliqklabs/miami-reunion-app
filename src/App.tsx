@@ -5,6 +5,7 @@ import { saveGeneratedImage, createUserSession, getUserGallery, isFirebaseConfig
 import PolaroidCard from './components/PolaroidCard';
 import NameEntry from './components/NameEntry';
 import HouGallery from './components/HouGallery';
+import CardStackPreview from './components/CardStackPreview';
 // import { createGalleryPage } from './lib/albumUtils'; // Removed - no longer using download functionality
 // import Footer from './components/Footer'; // Removed - no longer using footer
 import { STYLES } from './config/styles';
@@ -513,7 +514,19 @@ function App() {
                 </div>
 
                 {appState === 'name-entry' && (
-                    <NameEntry onSubmit={handleNameSubmit} />
+                    <div className="flex flex-col items-center space-y-4">
+                        {/* Card Stack Preview as Teaser */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 50 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5, duration: 0.8 }}
+                            className="mb-4"
+                        >
+                            <CardStackPreview />
+                        </motion.div>
+                        
+                        <NameEntry onSubmit={handleNameSubmit} />
+                    </div>
                 )}
 
                 {appState === 'idle' && (
