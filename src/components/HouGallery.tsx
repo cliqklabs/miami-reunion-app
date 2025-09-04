@@ -112,7 +112,7 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
             // Create download link with enhanced attributes to prevent navigation
             const link = document.createElement('a');
             link.href = blobUrl;
-            link.download = `casa-cardinal-${image.styleName.toLowerCase().replace(/\s+/g, '-')}-${image.userName}.jpg`;
+            link.download = `miami-vice-${image.styleName.toLowerCase().replace(/\s+/g, '-')}-${image.userName}.jpg`;
             link.style.display = 'none';
             link.rel = 'noopener noreferrer'; // Security and prevent navigation
             link.target = '_self'; // Ensure same window behavior
@@ -140,7 +140,7 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
             // Enhanced fallback method
             const link = document.createElement('a');
             link.href = image.generatedImageUrl;
-            link.download = `casa-cardinal-${image.styleName.toLowerCase().replace(/\s+/g, '-')}-${image.userName}.jpg`;
+            link.download = `miami-vice-${image.styleName.toLowerCase().replace(/\s+/g, '-')}-${image.userName}.jpg`;
             link.rel = 'noopener noreferrer';
             link.target = '_blank'; // Use _blank with download attribute to force download
             link.style.display = 'none';
@@ -170,7 +170,7 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
             const blob = await response.blob();
             
             // Create file for sharing
-            const file = new File([blob], `casa-cardinal-${image.styleName.toLowerCase().replace(/\s+/g, '-')}-${image.userName}.jpg`, {
+            const file = new File([blob], `miami-vice-${image.styleName.toLowerCase().replace(/\s+/g, '-')}-${image.userName}.jpg`, {
                 type: 'image/jpeg'
             });
 
@@ -208,19 +208,24 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
         <>
             <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 overflow-auto">
             {/* Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-teal-900/90 via-blue-900/90 to-indigo-900/90 backdrop-blur-sm p-4 border-b border-white/10">
+            <div className="sticky top-0 bg-gradient-to-r from-teal-900/90 via-blue-900/90 to-indigo-900/90 backdrop-blur-sm p-4 border-b border-white/10 relative">
                 <div className="max-w-6xl mx-auto flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-caveat font-bold text-white">Hou' Gallery</h1>
-                        <div className="flex items-center gap-2 mt-1">
-                            <img 
-                                src="/logo/miami_logo_2025.png" 
-                                alt="Miami Vice 2025" 
-                                className="h-6 w-auto opacity-90"
-                            />
-                            <p className="text-neutral-300 font-permanent-marker">Miami 2025</p>
-                        </div>
+                    {/* Left side - Text stacked vertically */}
+                    <div className="flex flex-col">
+                        <h1 className="text-2xl md:text-3xl font-caveat font-bold text-white">Hou' Gallery</h1>
+                        <p className="text-neutral-300 font-permanent-marker text-sm md:text-base">MIAMI 2025</p>
                     </div>
+                    
+                    {/* Center - Logo hanging down */}
+                    <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-2 md:-bottom-3">
+                        <img 
+                            src="/logo/miami_logo_2025.png" 
+                            alt="Miami Vice 2025" 
+                            className="h-16 md:h-24 lg:h-28 w-auto drop-shadow-lg"
+                        />
+                    </div>
+                    
+                    {/* Right side - Close button */}
                     <button
                         onClick={onClose}
                         className="text-white hover:text-orange-400 transition-colors"

@@ -370,7 +370,7 @@ function App() {
                 // Create download link with enhanced attributes to prevent navigation
                 const link = document.createElement('a');
                 link.href = blobUrl;
-                link.download = `casa-cardinal-${styleName.toLowerCase().replace(/\s+/g, '-')}-${userName}.jpg`;
+                link.download = `miami-vice-${styleName.toLowerCase().replace(/\s+/g, '-')}-${userName}.jpg`;
                 link.style.display = 'none';
                 link.rel = 'noopener noreferrer'; // Security and prevent navigation
                 link.target = '_self'; // Ensure same window behavior
@@ -398,7 +398,7 @@ function App() {
                 // Enhanced fallback method
                 const link = document.createElement('a');
                 link.href = image.url;
-                link.download = `casa-cardinal-${styleName.toLowerCase().replace(/\s+/g, '-')}-${userName}.jpg`;
+                link.download = `miami-vice-${styleName.toLowerCase().replace(/\s+/g, '-')}-${userName}.jpg`;
                 link.rel = 'noopener noreferrer';
                 link.target = '_blank'; // Use _blank with download attribute to force download
                 link.style.display = 'none';
