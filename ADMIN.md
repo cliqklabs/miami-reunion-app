@@ -1,6 +1,6 @@
 # Admin Gallery Management
 
-This is a standalone admin interface for managing the Casa Cardinal Miami gallery.
+This is a standalone admin interface for managing the Miami Vice 2025 gallery.
 
 ## Access
 

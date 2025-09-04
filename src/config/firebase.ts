@@ -1,4 +1,4 @@
-// Firebase configuration for Casa Cardinal Miami Reunion App
+// Firebase configuration for Miami Vice 2025 Reunion App
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
@@ -34,7 +34,7 @@ try {
       analytics = getAnalytics(app);
     }
     
-    console.log('Firebase initialized successfully for Casa Cardinal');
+    console.log('Firebase initialized successfully for Miami Vice 2025');
   } else {
     console.log('Firebase not configured - check environment variables');
   }

@@ -177,7 +177,7 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
             // Use Web Share API
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
-                    title: `Casa Cardinal - ${image.styleName}`,
+                    title: `Miami Vice 2025 - ${image.styleName}`,
                     text: `Check out my Miami ${image.styleName} transformation! 🏖️`,
                     files: [file]
                 });
@@ -212,7 +212,14 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
                 <div className="max-w-6xl mx-auto flex justify-between items-center">
                     <div>
                         <h1 className="text-3xl md:text-4xl font-caveat font-bold text-white">Hou' Gallery</h1>
-                        <p className="text-neutral-300 font-permanent-marker">Casa Cardinal Miami 2025</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <img 
+                                src="/logo/miami_logo_2025.png" 
+                                alt="Miami Vice 2025" 
+                                className="h-6 w-auto opacity-90"
+                            />
+                            <p className="text-neutral-300 font-permanent-marker">Miami 2025</p>
+                        </div>
                     </div>
                     <button
                         onClick={onClose}

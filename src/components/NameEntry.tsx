@@ -33,14 +33,6 @@ const NameEntry: React.FC<NameEntryProps> = ({ onSubmit }) => {
             transition={{ duration: 0.6, type: 'spring' }}
             className="flex flex-col items-center gap-6 max-w-md mx-auto"
         >
-            <div className="text-center">
-                <h2 className="text-3xl md:text-4xl font-caveat font-bold text-neutral-100 mb-2">
-                    Welcome to Miami!
-                </h2>
-                <p className="text-neutral-300 text-lg">
-                    Let's create your Miami reunion profile picture
-                </p>
-            </div>
 
             <form onSubmit={handleSubmit} className="w-full space-y-4">
                 <div>
@@ -70,9 +62,6 @@ const NameEntry: React.FC<NameEntryProps> = ({ onSubmit }) => {
                 </button>
             </form>
 
-            <p className="text-neutral-400 text-sm text-center max-w-xs">
-                Your name will be used to personalize your gallery and downloads
-            </p>
         </motion.div>
     );
 };

@@ -507,10 +507,15 @@ function App() {
             )}
 
             <div className="z-10 flex flex-col items-center justify-center w-full h-full flex-1 min-h-0">
-                <div className={`text-center mb-10 ${appState !== 'name-entry' ? 'mt-16 md:mt-0' : ''}`}>
-                    <h1 className="text-7xl md:text-9xl font-caveat font-bold text-purple-300 drop-shadow-[0_0_20px_rgba(196,181,253,0.6)] shadow-purple-300/50" style={{textShadow: '0 0 10px rgba(196,181,253,0.8), 0 0 20px rgba(196,181,253,0.6), 0 0 30px rgba(196,181,253,0.4)'}}>Casa Cardinal</h1>
-                    <p className="font-permanent-marker text-neutral-200 mt-2 text-2xl tracking-wide">Miami Hou' 2025</p>
-                    <p className="font-permanent-marker text-neutral-300 mt-1 text-base tracking-wide">{currentTheme.subtitle}</p>
+                <div className={`text-center mb-6 ${appState !== 'name-entry' ? 'mt-16 md:mt-0' : ''}`}>
+                    <div className="flex justify-center mb-4">
+                        <img 
+                            src="/logo/miami_logo_2025.png" 
+                            alt="Miami Vice 2025" 
+                            className="h-24 md:h-32 lg:h-40 w-auto drop-shadow-[0_0_20px_rgba(196,181,253,0.6)]"
+                            style={{filter: 'drop-shadow(0 0 10px rgba(196,181,253,0.8)) drop-shadow(0 0 20px rgba(196,181,253,0.6)) drop-shadow(0 0 30px rgba(196,181,253,0.4))'}}
+                        />
+                    </div>
                 </div>
 
                 {appState === 'name-entry' && (
@@ -524,6 +529,11 @@ function App() {
                         >
                             <CardStackPreview />
                         </motion.div>
+                        
+                        <div className="text-center mb-4">
+                            <p className="font-permanent-marker text-neutral-200 text-2xl tracking-wide">Miami Hou' 2025</p>
+                            <p className="font-permanent-marker text-neutral-300 mt-1 text-base tracking-wide">{currentTheme.subtitle}</p>
+                        </div>
                         
                         <NameEntry onSubmit={handleNameSubmit} />
                     </div>
