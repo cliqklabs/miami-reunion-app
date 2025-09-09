@@ -8,8 +8,8 @@ export const THEMES = {
     styles: {
       style1: {
         name: "Drug Lord",
-        description: "Scarface energy, baby",
-        prompt: "Transform into a Miami drug lord: expensive white linen suit, heavy gold chains, confident powerful stance, luxury mansion with palm trees in background, dramatic golden hour lighting, Scarface aesthetic, hint of cigar smoke atmosphere, photorealistic portrait style",
+        description: "Sleek Miami kingpin with '80s swagger",
+        prompt: "Transform into a Miami cartel boss: crisp expensive white linen suit, heavy gold chains, bold confident and powerfulstance, luxurious mansion with palm trees in the background, dramatic golden hour lighting, hint of hazy cigar smoke atmosphere, photorealistic portrait style, cinematic style, 4k",
         referenceImages: ["/reference-images/style1/ref-1.jpg", "/reference-images/style1/ref-2.jpg"]
       },
       style2: {
