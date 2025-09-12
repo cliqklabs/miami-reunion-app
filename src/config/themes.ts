@@ -1,5 +1,5 @@
-// Theme-specific content for the Miami Reunion app
-export const CURRENT_THEME = 'miami';
+// Theme-specific content for both Miami and Ibiza apps
+export const CURRENT_THEME = 'miami'; // Keep Miami as default for existing app
 
 export const THEMES = {
   miami: {
@@ -8,8 +8,8 @@ export const THEMES = {
     styles: {
       style1: {
         name: "Drug Lord",
-        description: "Sleek Miami kingpin with '80s swagger",
-        prompt: "Transform into a Miami cartel boss: crisp expensive white linen suit, heavy gold chains, bold confident and powerfulstance, luxurious mansion with palm trees in the background, dramatic golden hour lighting, hint of hazy cigar smoke atmosphere, photorealistic portrait style, cinematic style, 4k",
+        description: "Scarface energy, baby",
+        prompt: "Transform into a Miami drug lord: expensive white linen suit, heavy gold chains, confident powerful stance, luxury mansion with palm trees in background, dramatic golden hour lighting, Scarface aesthetic, cigar smoke atmosphere, photorealistic portrait style",
         referenceImages: ["/reference-images/style1/ref-1.jpg", "/reference-images/style1/ref-2.jpg"]
       },
       style2: {
@@ -42,6 +42,77 @@ export const THEMES = {
       secondary: "#ec4899", // pink
       accent: "#f97316" // orange
     }
+  },
+  ibiza: {
+    title: "Create Your Ibiza Profile Picture",
+    subtitle: "Mock your Ibiza stereotype (party on)",
+    styles: {
+      f1: {
+        name: "Selfie Influencer",
+        description: "Posing like your feed depends on it",
+        prompt: "Transform into an Ibiza selfie influencer: oversized sunglasses, flowy boho dress with too many accessories, pouting dramatically while taking a mirror selfie, infinity pool and palm trees in luxurious villa background, fake spiritual crystals scattered around, neon festival wristbands, over-edited filter aesthetic, photorealistic portrait style",
+        referenceImages: ["/reference-images/ibiza/f1/ref-1.jpg", "/reference-images/ibiza/f1/ref-2.jpg"]
+      },
+      f2: {
+        name: "Club Siren",
+        description: "Dancing like no one's judging (but they are)",
+        prompt: "Transform into an Ibiza club siren: skimpy sequined outfit, messy hair from all-night raving, glow sticks and confetti everywhere, crowded nightclub with strobe lights and DJ booth in background, spilling a colorful cocktail while attempting a sexy pose, exhausted but euphoric expression, vibrant neon lighting, photorealistic portrait style",
+        referenceImages: ["/reference-images/ibiza/f2/ref-1.jpg", "/reference-images/ibiza/f2/ref-2.jpg"]
+      },
+      f3: {
+        name: "Boho Hippie",
+        description: "Free spirit, paid vacation",
+        prompt: "Transform into an Ibiza boho hippie: layered ethnic prints and fringe overload, flower crown slipping off, pretending to meditate on a crowded beach, yoga mat and essential oils nearby, sunburnt skin with mismatched tan lines, eclectic jewelry clashing wildly, serene yet chaotic sunset beach scene, photorealistic portrait style",
+        referenceImages: ["/reference-images/ibiza/f3/ref-1.jpg", "/reference-images/ibiza/f3/ref-2.jpg"]
+      },
+      f4: {
+        name: "Wannabe Shaman",
+        description: "Enlightened after one ayahuasca retreat",
+        prompt: "Transform into an Ibiza wannabe shaman: feathers and crystals in hair, flowy robes with mystical symbols, holding a smudge stick awkwardly, surrounded by tarot cards and incense in a hippy market stall, confused enlightened gaze, colorful tents and other tourists in background, golden hour mystical lighting, photorealistic portrait style",
+        referenceImages: ["/reference-images/ibiza/f4/ref-1.jpg", "/reference-images/ibiza/f4/ref-2.jpg"]
+      },
+      f5: {
+        name: "Lost Tourist",
+        description: "Map? What map?",
+        prompt: "Transform into an Ibiza lost tourist: tacky floral shirt and shorts, massive backpack and fanny pack, holding a crumpled map upside down, sunburnt face with white sunglass marks, surrounded by partygoers and street vendors, bewildered expression at a beach bar, chaotic midday crowd scene, photorealistic portrait style",
+        referenceImages: ["/reference-images/ibiza/f5/ref-1.jpg", "/reference-images/ibiza/f5/ref-2.jpg"]
+      },
+      m1: {
+        name: "Party Bro",
+        description: "Shirt optional, ego mandatory",
+        prompt: "Transform into an Ibiza party bro: shirtless with neon body paint, backward cap and glow necklaces, flexing awkwardly in a foam party, beer in hand spilling everywhere, crowded club with lasers and bass speakers in background, overly confident grin, sweaty chaotic nightlife vibe, photorealistic portrait style",
+        referenceImages: ["/reference-images/ibiza/m1/ref-1.jpg", "/reference-images/ibiza/m1/ref-2.jpg"]
+      },
+      m2: {
+        name: "DJ Wannabe",
+        description: "Headphones on, talent off",
+        prompt: "Transform into an Ibiza DJ wannabe: oversized headphones around neck, graphic tee with EDM slogans, posing at a fake turntable setup on the beach, sunglasses at night, surrounded by adoring fans that don't exist, dramatic stage lights and smoke machines, smug aspiring artist expression, photorealistic portrait style",
+        referenceImages: ["/reference-images/ibiza/m2/ref-1.jpg", "/reference-images/ibiza/m2/ref-2.jpg"]
+      },
+      m3: {
+        name: "Yacht Playboy",
+        description: "Rented luxury, permanent delusion",
+        prompt: "Transform into an Ibiza yacht playboy: unbuttoned linen shirt, gold chains dangling, lounging on a tiny rented boat pretending it's a mega-yacht, champagne flute in hand, surrounded by inflatable toys and empty bottles, posing with fake models, azure sea and cliffs in background, arrogant smirk, photorealistic portrait style",
+        referenceImages: ["/reference-images/ibiza/m3/ref-1.jpg", "/reference-images/ibiza/m3/ref-2.jpg"]
+      },
+      m4: {
+        name: "Spiritual Dude",
+        description: "Namaste, pass the joint",
+        prompt: "Transform into an Ibiza spiritual dude: dreadlocks tied messily, tie-dye shirt and harem pants, attempting a yoga pose on a rocky cliff, beads and amulets everywhere, distant gaze as if enlightened, hippie commune tents and fire pits in background, hazy sunset aura, photorealistic portrait style",
+        referenceImages: ["/reference-images/ibiza/m4/ref-1.jpg", "/reference-images/ibiza/m4/ref-2.jpg"]
+      },
+      m5: {
+        name: "Rave Veteran",
+        description: "Too old for this, but trying",
+        prompt: "Transform into an Ibiza rave veteran: balding with ponytail, outdated rave gear like baggy pants and whistles, dancing off-beat in a young crowd, glow sticks from the 90s, sweaty and out of breath, massive club speakers and strobe lights in background, determined but tired expression, photorealistic portrait style",
+        referenceImages: ["/reference-images/ibiza/m5/ref-1.jpg", "/reference-images/ibiza/m5/ref-2.jpg"]
+      }
+    },
+    colors: {
+      primary: "#6366f1", // indigo
+      secondary: "#f43f5e", // rose
+      accent: "#fbbf24" // amber
+    }
   }
 };
 
@@ -49,3 +120,4 @@ export const THEMES = {
 export const getCurrentTheme = () => THEMES[CURRENT_THEME];
 export const getStyleConfig = (styleId) => getCurrentTheme().styles[styleId];
 export const getAllStyles = () => Object.keys(getCurrentTheme().styles);
+export const getTheme = (themeName: string) => THEMES[themeName];

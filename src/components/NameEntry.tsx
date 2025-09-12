@@ -3,9 +3,10 @@ import { motion } from 'framer-motion';
 
 interface NameEntryProps {
     onSubmit: (name: string) => void;
+    theme?: 'miami' | 'ibiza';
 }
 
-const NameEntry: React.FC<NameEntryProps> = ({ onSubmit }) => {
+const NameEntry: React.FC<NameEntryProps> = ({ onSubmit, theme = 'miami' }) => {
     const [name, setName] = useState('');
     const [error, setError] = useState('');
 
@@ -56,9 +57,13 @@ const NameEntry: React.FC<NameEntryProps> = ({ onSubmit }) => {
 
                 <button
                     type="submit"
-                    className="w-full font-permanent-marker text-2xl text-center text-black bg-gradient-to-r from-orange-400 to-pink-500 py-4 px-8 rounded-lg transform transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25 active:scale-95"
+                    className={`w-full font-permanent-marker text-2xl text-center text-black py-4 px-8 rounded-lg transform transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95 ${
+                        theme === 'ibiza' 
+                            ? 'bg-gradient-to-r from-indigo-400 to-rose-500 hover:shadow-indigo-500/25' 
+                            : 'bg-gradient-to-r from-orange-400 to-pink-500 hover:shadow-orange-500/25'
+                    }`}
                 >
-                    OH YEE!
+                    {theme === 'ibiza' ? 'A\'ho, let\'s go!' : 'OH YEE!'}
                 </button>
             </form>
 
