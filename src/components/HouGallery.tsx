@@ -358,7 +358,7 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose, memberData }) => {
                         overflowY: 'hidden' // Prevent background scroll
                     }}
                     onClick={closeImageViewer}
-                    onTouchMove={(e) => {
+                    onTouchMove={() => {
                         // Background scroll prevention handled by CSS overflow
                     }}
                 >
@@ -409,7 +409,7 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose, memberData }) => {
 
                         {/* Image Container */}
                         <div 
-                            className="w-full h-full flex items-center justify-center px-2 py-4 md:px-4 md:py-8"
+                            className="w-full h-full flex items-start justify-center px-2 py-2 md:px-4 md:py-4 pb-6 md:pb-8"
                             onClick={(e) => e.stopPropagation()}
                             onTouchStart={(e) => {
                                 // Only handle swipes on mobile
@@ -477,7 +477,7 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose, memberData }) => {
                                 }}
                                 exit={{ scale: 0.8, opacity: 0 }}
                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                className="bg-white rounded-lg p-3 md:p-6 shadow-2xl max-w-4xl max-h-[95vh] w-full mx-auto flex flex-col overflow-y-auto"
+                                className="bg-white rounded-lg p-3 md:p-6 shadow-2xl max-w-4xl max-h-[85vh] w-full mx-auto flex flex-col overflow-y-auto mt-4 md:mt-8"
                             >
                                 {/* Full-size Polaroid Frame - Responsive sizing */}
                                 <div className="w-full max-w-xs md:max-w-sm lg:max-w-lg mx-auto bg-neutral-100 rounded-md flex-shrink min-h-0" style={{ aspectRatio: '4/5' }}>
@@ -489,7 +489,7 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose, memberData }) => {
                                 </div>
                                 
                                 {/* Image Info */}
-                                <div className="text-center mt-1 md:mt-2 space-y-0.5 md:space-y-1 flex-shrink-0">
+                                <div className="text-center mt-0.5 md:mt-1 space-y-0.5 md:space-y-1 flex-shrink-0">
                                     <h3 className="font-permanent-marker text-lg md:text-xl text-black">
                                         {images[selectedImageIndex].styleName}
                                     </h3>
@@ -498,7 +498,7 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose, memberData }) => {
                                     </p>
                                     
                                     {/* Download and Share Buttons */}
-                                    <div className="flex justify-center gap-2 md:gap-3 mt-1.5 md:mt-3 pb-1">
+                                    <div className="flex justify-center gap-2 md:gap-3 mt-1 md:mt-2 pb-0.5">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -513,7 +513,7 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose, memberData }) => {
                                         </button>
                                         
                                         {/* Web Share API Button - Mobile Only */}
-                                        {typeof window !== 'undefined' && navigator?.share && (
+                                        {typeof window !== 'undefined' && navigator?.share !== undefined && (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();

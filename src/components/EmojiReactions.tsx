@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FraternityMember } from '../services/googleSheetsService';
+import { getEmojiReactions, saveEmojiReaction, EmojiReaction } from '../services/firebaseService';
 
-interface Reaction {
-    emoji: string;
-    count: number;
-    users: string[];
-}
+// Using EmojiReaction interface from firebaseService
 
 interface EmojiReactionsProps {
     imageId: string;
@@ -17,7 +14,8 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
     imageId, 
     memberData 
 }) => {
-    const [reactions, setReactions] = useState<Record<string, Reaction>>({});
+    const [reactions, setReactions] = useState<Record<string, EmojiReaction>>({});
+    const [loading, setLoading] = useState(true);
 
     const availableEmojis = [
         { emoji: '🔥', label: 'Fire' },
@@ -28,26 +26,55 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
         { emoji: '🌈', label: 'Fruity' }
     ];
 
-    // Load reactions from localStorage
+    // Load reactions from Firebase
     useEffect(() => {
-        const savedReactions = localStorage.getItem(`reactions-${imageId}`);
-        if (savedReactions) {
+        const loadReactions = async () => {
+            setLoading(true);
             try {
-                setReactions(JSON.parse(savedReactions));
+                const firebaseReactions = await getEmojiReactions(imageId);
+                setReactions(firebaseReactions);
             } catch (error) {
-                console.error('Failed to load reactions:', error);
+                console.error('Failed to load reactions from Firebase:', error);
+                // Fallback to localStorage for backwards compatibility
+                const savedReactions = localStorage.getItem(`reactions-${imageId}`);
+                if (savedReactions) {
+                    try {
+                        setReactions(JSON.parse(savedReactions));
+                    } catch (localError) {
+                        console.error('Failed to load reactions from localStorage:', localError);
+                    }
+                }
+            } finally {
+                setLoading(false);
             }
-        }
+        };
+
+        loadReactions();
+
+        // Set up periodic refresh to sync reactions across users
+        const refreshInterval = setInterval(async () => {
+            try {
+                const firebaseReactions = await getEmojiReactions(imageId);
+                setReactions(firebaseReactions);
+            } catch (error) {
+                // Silent fail for background refresh
+                console.warn('Background reaction refresh failed:', error);
+            }
+        }, 5000); // Refresh every 5 seconds
+
+        // Cleanup interval on unmount
+        return () => clearInterval(refreshInterval);
     }, [imageId]);
 
-    const handleReaction = (emoji: string) => {
+    const handleReaction = async (emoji: string) => {
         if (!memberData) return;
 
         const currentReaction = reactions[emoji] || { emoji, count: 0, users: [] };
         const userNickname = memberData.nickname;
         const hasReacted = currentReaction.users.includes(userNickname);
 
-        let updatedReaction: Reaction;
+        // Optimistically update UI
+        let updatedReaction: EmojiReaction;
         if (hasReacted) {
             // Remove reaction
             updatedReaction = {
@@ -74,18 +101,44 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
             delete updatedReactions[emoji];
         }
 
+        // Update local state immediately for responsive UI
         setReactions(updatedReactions);
-        localStorage.setItem(`reactions-${imageId}`, JSON.stringify(updatedReactions));
+
+        // Save to Firebase in background
+        try {
+            const success = await saveEmojiReaction(imageId, emoji, userNickname, !hasReacted);
+            if (!success) {
+                // If Firebase save failed, revert the optimistic update
+                console.error('Failed to save reaction to Firebase, reverting...');
+                setReactions(reactions); // Revert to original state
+                
+                // Fallback: save to localStorage
+                localStorage.setItem(`reactions-${imageId}`, JSON.stringify(updatedReactions));
+            }
+        } catch (error) {
+            console.error('Error saving reaction:', error);
+            // Revert optimistic update
+            setReactions(reactions);
+            // Fallback: save to localStorage
+            localStorage.setItem(`reactions-${imageId}`, JSON.stringify(updatedReactions));
+        }
     };
 
+    if (loading) {
+        return (
+            <div className="mt-2 md:mt-4 p-2 md:p-3 bg-black/30 backdrop-blur-sm rounded-lg">
+                <div className="text-center">
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mx-auto mb-2"></div>
+                    <p className="font-permanent-marker text-white text-xs">Loading reactions...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="mt-2 md:mt-4 p-2 md:p-3 bg-black/30 backdrop-blur-sm rounded-lg">
-            <h4 className="font-permanent-marker text-white text-xs md:text-sm mb-2 md:mb-3 text-center">
-                React to this photo
-            </h4>
-            
+        <div className="mt-1 md:mt-2 p-2 md:p-3 bg-black/30 backdrop-blur-sm rounded-lg">
             {/* Reaction Buttons - Compact grid for mobile */}
-            <div className="grid grid-cols-3 md:flex md:flex-wrap md:justify-center gap-1 md:gap-2 mb-2 md:mb-3">
+            <div className="grid grid-cols-3 md:flex md:flex-wrap md:justify-center gap-1 md:gap-2">
                 {availableEmojis.map(({ emoji, label }) => {
                     const reaction = reactions[emoji];
                     const hasReacted = reaction?.users.includes(memberData?.nickname || '') || false;
@@ -116,29 +169,6 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
                 })}
             </div>
 
-            {/* Show who reacted (only if there are reactions) - Compact on mobile */}
-            {Object.values(reactions).some(r => r.count > 0) && (
-                <div className="text-center max-h-16 md:max-h-none overflow-y-auto">
-                    <div className="flex flex-wrap justify-center gap-1 md:gap-0 md:block">
-                        {Object.entries(reactions)
-                            .filter(([, reaction]) => reaction.count > 0)
-                            .map(([emoji, reaction]) => (
-                                <div key={emoji} className="text-xs text-gray-300 md:mb-1 px-1 md:px-0">
-                                    <span className="mr-1">{emoji}</span>
-                                    <span className="hidden md:inline">
-                                        {reaction.users.slice(0, 3).join(', ')}
-                                        {reaction.users.length > 3 && ` +${reaction.users.length - 3} more`}
-                                    </span>
-                                    <span className="md:hidden">
-                                        {reaction.users.slice(0, 2).join(', ')}
-                                        {reaction.users.length > 2 && ` +${reaction.users.length - 2}`}
-                                    </span>
-                                </div>
-                            ))
-                        }
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

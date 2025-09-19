@@ -2,7 +2,7 @@
 // Handles user sessions and image storage for gallery functionality
 
 import { db, storage, auth } from '../config/firebase';
-import { collection, addDoc, updateDoc, doc, getDoc, query, where, getDocs, Timestamp, orderBy } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, getDoc, query, where, getDocs, Timestamp, orderBy, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 
@@ -219,6 +219,117 @@ export const getAllGalleryImages = async (): Promise<GeneratedImage[]> => {
   } catch (error) {
     console.error('Failed to fetch all gallery images:', error);
     return [];
+  }
+};
+
+// Emoji Reactions Functions
+
+export interface EmojiReaction {
+  emoji: string;
+  count: number;
+  users: string[];
+}
+
+// Save emoji reaction to Firebase
+export const saveEmojiReaction = async (
+  imageId: string,
+  emoji: string,
+  userNickname: string,
+  isAdding: boolean
+): Promise<boolean> => {
+  if (!db) return false;
+
+  try {
+    // Ensure user is authenticated
+    if (!auth.currentUser) {
+      await initializeAuth();
+    }
+
+    const reactionDocRef = doc(db, 'reactions', `${imageId}-${emoji}`);
+    const reactionDoc = await getDoc(reactionDocRef);
+
+    if (reactionDoc.exists()) {
+      const data = reactionDoc.data();
+      const users = data.users || [];
+      
+      let updatedUsers: string[];
+      if (isAdding) {
+        // Add user if not already in the list
+        updatedUsers = users.includes(userNickname) ? users : [...users, userNickname];
+      } else {
+        // Remove user from the list
+        updatedUsers = users.filter((user: string) => user !== userNickname);
+      }
+
+      if (updatedUsers.length === 0) {
+        // Delete the document if no users left
+        await updateDoc(reactionDocRef, {
+          count: 0,
+          users: [],
+          updatedAt: Timestamp.now()
+        });
+      } else {
+        // Update with new user list
+        await updateDoc(reactionDocRef, {
+          count: updatedUsers.length,
+          users: updatedUsers,
+          updatedAt: Timestamp.now()
+        });
+      }
+    } else if (isAdding) {
+      // Create new reaction document - using setDoc to use the specific ID
+      const reactionData = {
+        imageId,
+        emoji,
+        count: 1,
+        users: [userNickname],
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      };
+      
+      await setDoc(reactionDocRef, reactionData);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Failed to save emoji reaction:', error);
+    return false;
+  }
+};
+
+// Get emoji reactions for an image
+export const getEmojiReactions = async (imageId: string): Promise<Record<string, EmojiReaction>> => {
+  if (!db) return {};
+
+  try {
+    // Ensure user is authenticated
+    if (!auth.currentUser) {
+      await initializeAuth();
+    }
+
+    const q = query(
+      collection(db, 'reactions'),
+      where('imageId', '==', imageId)
+    );
+
+    const querySnapshot = await getDocs(q);
+    const reactions: Record<string, EmojiReaction> = {};
+
+    querySnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      if (data.count > 0) {
+        reactions[data.emoji] = {
+          emoji: data.emoji,
+          count: data.count,
+          users: data.users || []
+        };
+      }
+    });
+
+    return reactions;
+  } catch (error) {
+    console.error('Failed to get emoji reactions:', error);
+    return {};
   }
 };
 

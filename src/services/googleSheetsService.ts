@@ -72,11 +72,15 @@ const MOCK_MEMBERS: FraternityMember[] = [
 
 export const fetchMemberByEmail = async (email: string): Promise<FraternityMember | null> => {
   try {
-    // Use relative path for production (Vercel), localhost for development
-    const apiUrl = process.env.NODE_ENV === 'production' 
-      ? `/api/member-lookup?email=${encodeURIComponent(email)}`
-      : `http://localhost:3002/api/member-lookup?email=${encodeURIComponent(email)}`;
-    
+    // In development, use mock data directly to avoid API errors
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Using mock data for development...');
+      const member = MOCK_MEMBERS.find(m => m.email.toLowerCase() === email.toLowerCase());
+      return member || null;
+    }
+
+    // Production: Use Vercel serverless function
+    const apiUrl = `/api/member-lookup?email=${encodeURIComponent(email)}`;
     const response = await fetch(apiUrl);
     if (response.ok) {
       return await response.json();
