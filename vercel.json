@@ -3,10 +3,5 @@
     "api/member-lookup.js": {
       "maxDuration": 10
     }
-  },
-  "env": {
-    "GOOGLE_SHEET_ID": "@google-sheet-id",
-    "GOOGLE_SERVICE_ACCOUNT_EMAIL": "@google-service-account-email", 
-    "GOOGLE_PRIVATE_KEY": "@google-private-key"
   }
 }

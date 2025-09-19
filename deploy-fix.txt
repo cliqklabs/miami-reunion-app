@@ -1,0 +1,2 @@
+Force Vercel to deploy latest main branch with email authentication and API routes
+Created: December 19, 2024
