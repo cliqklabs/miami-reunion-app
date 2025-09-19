@@ -105,16 +105,9 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose, memberData }) => {
         try {
             console.log('Downloading original image from gallery:', image.styleName);
             
-            // Fetch the image as a blob to ensure proper download behavior
-            const response = await fetch(image.generatedImageUrl);
-            const blob = await response.blob();
-            
-            // Create object URL from blob
-            const blobUrl = URL.createObjectURL(blob);
-            
-            // Create download link with enhanced attributes to prevent navigation
+            // Direct download without fetching blob to avoid CORS issues
             const link = document.createElement('a');
-            link.href = blobUrl;
+            link.href = image.generatedImageUrl;
             link.download = `miami-vice-${image.styleName.toLowerCase().replace(/\s+/g, '-')}-${image.userName}.jpg`;
             link.style.display = 'none';
             link.rel = 'noopener noreferrer'; // Security and prevent navigation
@@ -134,7 +127,6 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose, memberData }) => {
             // Use setTimeout to ensure download starts before cleanup
             setTimeout(() => {
                 document.body.removeChild(link);
-                URL.revokeObjectURL(blobUrl);
             }, 100);
             
             console.log('Gallery original image downloaded successfully:', image.styleName);
@@ -168,21 +160,12 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose, memberData }) => {
     // Share function using Web Share API
     const handleShareImage = async (image: GeneratedImage) => {
         try {
-            // Convert original image URL to blob for sharing
-            const response = await fetch(image.generatedImageUrl);
-            const blob = await response.blob();
-            
-            // Create file for sharing
-            const file = new File([blob], `miami-vice-${image.styleName.toLowerCase().replace(/\s+/g, '-')}-${image.userName}.jpg`, {
-                type: 'image/jpeg'
-            });
-
-            // Use Web Share API
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            // Try to share using Web Share API without files (to avoid CORS)
+            if (navigator.share) {
                 await navigator.share({
                     title: `Miami Vice 2025 - ${image.styleName}`,
                     text: `Check out my Miami ${image.styleName} transformation! 🏖️`,
-                    files: [file]
+                    url: image.generatedImageUrl
                 });
             } else {
                 // Fallback: just download the image
