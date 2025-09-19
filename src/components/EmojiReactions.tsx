@@ -79,13 +79,13 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
     };
 
     return (
-        <div className="mt-4 p-3 bg-black/30 backdrop-blur-sm rounded-lg">
-            <h4 className="font-permanent-marker text-white text-sm mb-3 text-center">
+        <div className="mt-2 md:mt-4 p-2 md:p-3 bg-black/30 backdrop-blur-sm rounded-lg">
+            <h4 className="font-permanent-marker text-white text-xs md:text-sm mb-2 md:mb-3 text-center">
                 React to this photo
             </h4>
             
-            {/* Reaction Buttons */}
-            <div className="flex flex-wrap justify-center gap-2 mb-3">
+            {/* Reaction Buttons - Compact grid for mobile */}
+            <div className="grid grid-cols-3 md:flex md:flex-wrap md:justify-center gap-1 md:gap-2 mb-2 md:mb-3">
                 {availableEmojis.map(({ emoji, label }) => {
                     const reaction = reactions[emoji];
                     const hasReacted = reaction?.users.includes(memberData?.nickname || '') || false;
@@ -95,19 +95,19 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
                             key={emoji}
                             onClick={() => handleReaction(emoji)}
                             className={`
-                                flex items-center gap-1 px-3 py-1 rounded-full text-sm transition-all duration-200
+                                flex items-center justify-center gap-1 px-2 md:px-3 py-1 rounded-full text-xs md:text-sm transition-all duration-200
                                 ${hasReacted 
-                                    ? 'bg-orange-500 text-white scale-110' 
+                                    ? 'bg-orange-500 text-white scale-105' 
                                     : 'bg-white/20 text-white hover:bg-white/30 hover:scale-105'
                                 }
                             `}
-                            whileHover={{ scale: hasReacted ? 1.1 : 1.05 }}
+                            whileHover={{ scale: hasReacted ? 1.05 : 1.03 }}
                             whileTap={{ scale: 0.95 }}
                             title={label}
                         >
-                            <span className="text-lg">{emoji}</span>
+                            <span className="text-sm md:text-lg">{emoji}</span>
                             {reaction && reaction.count > 0 && (
-                                <span className="font-bold">
+                                <span className="font-bold text-xs md:text-sm">
                                     {reaction.count}
                                 </span>
                             )}
@@ -116,19 +116,27 @@ const EmojiReactions: React.FC<EmojiReactionsProps> = ({
                 })}
             </div>
 
-            {/* Show who reacted (only if there are reactions) */}
+            {/* Show who reacted (only if there are reactions) - Compact on mobile */}
             {Object.values(reactions).some(r => r.count > 0) && (
-                <div className="text-center">
-                    {Object.entries(reactions)
-                        .filter(([, reaction]) => reaction.count > 0)
-                        .map(([emoji, reaction]) => (
-                            <div key={emoji} className="text-xs text-gray-300 mb-1">
-                                <span className="mr-1">{emoji}</span>
-                                {reaction.users.slice(0, 3).join(', ')}
-                                {reaction.users.length > 3 && ` +${reaction.users.length - 3} more`}
-                            </div>
-                        ))
-                    }
+                <div className="text-center max-h-16 md:max-h-none overflow-y-auto">
+                    <div className="flex flex-wrap justify-center gap-1 md:gap-0 md:block">
+                        {Object.entries(reactions)
+                            .filter(([, reaction]) => reaction.count > 0)
+                            .map(([emoji, reaction]) => (
+                                <div key={emoji} className="text-xs text-gray-300 md:mb-1 px-1 md:px-0">
+                                    <span className="mr-1">{emoji}</span>
+                                    <span className="hidden md:inline">
+                                        {reaction.users.slice(0, 3).join(', ')}
+                                        {reaction.users.length > 3 && ` +${reaction.users.length - 3} more`}
+                                    </span>
+                                    <span className="md:hidden">
+                                        {reaction.users.slice(0, 2).join(', ')}
+                                        {reaction.users.length > 2 && ` +${reaction.users.length - 2}`}
+                                    </span>
+                                </div>
+                            ))
+                        }
+                    </div>
                 </div>
             )}
         </div>

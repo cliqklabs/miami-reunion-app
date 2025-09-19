@@ -477,7 +477,7 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose, memberData }) => {
                                 }}
                                 exit={{ scale: 0.8, opacity: 0 }}
                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                className="bg-white rounded-lg p-3 md:p-6 shadow-2xl max-w-4xl max-h-[90vh] w-full mx-auto flex flex-col overflow-hidden"
+                                className="bg-white rounded-lg p-3 md:p-6 shadow-2xl max-w-4xl max-h-[95vh] w-full mx-auto flex flex-col overflow-y-auto"
                             >
                                 {/* Full-size Polaroid Frame - Responsive sizing */}
                                 <div className="w-full max-w-xs md:max-w-sm lg:max-w-lg mx-auto bg-neutral-100 rounded-md flex-shrink min-h-0" style={{ aspectRatio: '4/5' }}>
