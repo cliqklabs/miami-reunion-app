@@ -98,8 +98,8 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
     const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         if (!onShake || isMobile) return;
 
-        const velocityThreshold = 1500; // Increased threshold to require more vigorous movement
-        const shakeCooldown = 2000; // Increased cooldown to prevent accidental rapid triggers
+        const velocityThreshold = 2500; // Increased threshold to require more vigorous movement
+        const shakeCooldown = 3000; // Increased cooldown to prevent accidental rapid triggers
 
         const { x, y } = info.velocity;
         const { x: prevX, y: prevY } = lastVelocity.current;
@@ -110,14 +110,14 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
         
         // Check for rapid back-and-forth movement (shake) - made much more strict
         const dotProduct = (x * prevX) + (y * prevY);
-        const isDirectionChange = dotProduct < -500; // Much stricter direction change requirement
+        const isDirectionChange = dotProduct < -800; // Much stricter direction change requirement
         
         // Require both rapid movement AND direction change for shake detection
         const isRapidMovement = magnitude > velocityThreshold;
 
         // Removed the easy trigger option - now requires BOTH rapid movement AND direction change
         // Also increased the fallback threshold significantly
-        if ((isRapidMovement && isDirectionChange) || magnitude > velocityThreshold * 2.5) {
+        if ((isRapidMovement && isDirectionChange) || magnitude > velocityThreshold * 3.0) {
             if (now - lastShakeTime.current > shakeCooldown) {
                 lastShakeTime.current = now;
                 console.log('Shake detected for:', caption, 'velocity:', magnitude);
@@ -166,7 +166,13 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         console.log('Heart clicked for:', caption);
-                                        onSaveToGallery(caption);
+                                        console.log('onSaveToGallery function:', onSaveToGallery);
+                                        console.log('isSavedToGallery:', isSavedToGallery);
+                                        if (onSaveToGallery) {
+                                            onSaveToGallery(caption);
+                                        } else {
+                                            console.error('onSaveToGallery is not defined!');
+                                        }
                                     }}
                                     className="p-2 bg-black/50 rounded-full hover:bg-black/75 focus:outline-none focus:ring-2 focus:ring-white cursor-pointer"
                                 >

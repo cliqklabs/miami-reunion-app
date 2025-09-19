@@ -277,10 +277,16 @@ function App() {
     };
 
     const handleSaveToGallery = async (styleName: string) => {
+        console.log('handleSaveToGallery called with:', styleName);
+        console.log('Available styles:', Object.keys(currentTheme.styles));
+        console.log('Style names:', Object.values(currentTheme.styles).map(s => s.name));
+        
         // Find the styleKey from the style name
         const styleKey = Object.keys(currentTheme.styles).find(key => 
             currentTheme.styles[key].name === styleName
         );
+        
+        console.log('Found styleKey:', styleKey, 'for styleName:', styleName);
         
         if (!styleKey) {
             console.error('Could not find style key for:', styleName);
@@ -303,20 +309,38 @@ function App() {
             try {
                 const success = await updateImageGalleryStatus(userSessionId, styleKey, newStatus);
                 if (!success) {
-                    console.error('Failed to update gallery status in Firebase');
-                    // Revert local state if Firebase save fails
-                    setSavedToGallery(prev => ({
-                        ...prev,
-                        [styleKey]: isCurrentlySaved
-                    }));
+                    console.warn(`No Firebase image found for ${styleName} (${styleKey}). Attempting to create missing record...`);
+                    
+                    // Try to create the missing Firebase record
+                    const generatedImage = generatedImages[styleKey];
+                    if (generatedImage?.url) {
+                        try {
+                            const savedImage = await saveGeneratedImage(
+                                userSessionId,
+                                userName,
+                                styleKey,
+                                styleName,
+                                uploadedImage || '', // Use uploaded image if available
+                                generatedImage.url
+                            );
+                            
+                            if (savedImage) {
+                                console.log(`Successfully created missing Firebase record for ${styleName}`);
+                                // Now update the gallery status
+                                await updateImageGalleryStatus(userSessionId, styleKey, newStatus);
+                            } else {
+                                console.error(`Failed to create Firebase record for ${styleName}`);
+                            }
+                        } catch (createError) {
+                            console.error(`Failed to create missing Firebase record for ${styleName}:`, createError);
+                        }
+                    } else {
+                        console.error(`Cannot create Firebase record for ${styleName} - no generated image URL found`);
+                    }
                 }
             } catch (error) {
                 console.error('Failed to update gallery status in Firebase:', error);
-                // Revert local state if Firebase save fails
-                setSavedToGallery(prev => ({
-                    ...prev,
-                    [styleKey]: isCurrentlySaved
-                }));
+                console.warn('Continuing with local state only due to Firebase error');
             }
         }
     };

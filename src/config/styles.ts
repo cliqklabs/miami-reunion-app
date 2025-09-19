@@ -22,7 +22,7 @@ export const STYLES = {
     displayName: 'Style 4',
     order: 4
   },
-    style5: {
+  style5: {
     id: 'style5',
     displayName: 'Style 5',
     order: 5   
