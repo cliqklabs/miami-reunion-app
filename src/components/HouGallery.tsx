@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAllGalleryImages, GeneratedImage } from '../services/firebaseService';
+import { FraternityMember } from '../services/googleSheetsService';
+import EmojiReactions from './EmojiReactions';
 
 interface HouGalleryProps {
     onClose: () => void;
+    memberData: FraternityMember | null;
 }
 
-const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
+const HouGallery: React.FC<HouGalleryProps> = ({ onClose, memberData }) => {
     const [images, setImages] = useState<GeneratedImage[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -300,7 +303,6 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
                                         const isTap = deltaTime < 300 && deltaX < 10 && deltaY < 10;
                                         
                                         if (isTap) {
-                                            e.preventDefault();
                                             openImageViewer(index);
                                         }
                                         
@@ -374,8 +376,7 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
                     }}
                     onClick={closeImageViewer}
                     onTouchMove={(e) => {
-                        // Prevent all background scrolling when modal is open
-                        e.preventDefault();
+                        // Background scroll prevention handled by CSS overflow
                     }}
                 >
                         {/* Close Button */}
@@ -438,19 +439,15 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
                                 }
                             }}
                             onTouchMove={(e) => {
-                                // Prevent all scrolling in modal on mobile
-                                if (window.innerWidth <= 768) {
-                                    e.preventDefault(); // Prevent background scrolling
+                                // Handle swipe gestures on mobile
+                                if (window.innerWidth <= 768 && swipeStart) {
+                                    const touch = e.touches[0];
+                                    const deltaX = touch.clientX - swipeStart.x;
+                                    const deltaY = Math.abs(touch.clientY - swipeStart.y);
                                     
-                                    if (swipeStart) {
-                                        const touch = e.touches[0];
-                                        const deltaX = touch.clientX - swipeStart.x;
-                                        const deltaY = Math.abs(touch.clientY - swipeStart.y);
-                                        
-                                        // Only track horizontal movement if it's more horizontal than vertical
-                                        if (Math.abs(deltaX) > deltaY) {
-                                            setSwipeOffset(deltaX * 0.3); // Dampen the movement for subtle feedback
-                                        }
+                                    // Only track horizontal movement if it's more horizontal than vertical
+                                    if (Math.abs(deltaX) > deltaY) {
+                                        setSwipeOffset(deltaX * 0.3); // Dampen the movement for subtle feedback
                                     }
                                 }
                             }}
@@ -516,11 +513,6 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
                                     <p className="text-neutral-600 text-sm md:text-base">
                                         by {images[selectedImageIndex].userName}
                                     </p>
-                                    <div className="flex justify-center items-center gap-2 md:gap-4 text-xs md:text-sm text-neutral-500">
-                                        <span>{images[selectedImageIndex].timestamp.toLocaleDateString()}</span>
-                                        <span>•</span>
-                                        <span>{selectedImageIndex + 1} of {images.length}</span>
-                                    </div>
                                     
                                     {/* Download and Share Buttons */}
                                     <div className="flex justify-center gap-2 md:gap-3 mt-1.5 md:mt-3 pb-1">
@@ -538,7 +530,7 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
                                         </button>
                                         
                                         {/* Web Share API Button - Mobile Only */}
-                                        {navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && (
+                                        {typeof window !== 'undefined' && navigator?.share && (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -553,6 +545,12 @@ const HouGallery: React.FC<HouGalleryProps> = ({ onClose }) => {
                                             </button>
                                         )}
                                     </div>
+                                    
+                                    {/* Emoji Reactions */}
+                                    <EmojiReactions 
+                                        imageId={images[selectedImageIndex].id}
+                                        memberData={memberData}
+                                    />
                                 </div>
                             </motion.div>
                         </div>

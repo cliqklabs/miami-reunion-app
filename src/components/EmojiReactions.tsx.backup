@@ -1,0 +1,138 @@
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { FraternityMember } from '../services/googleSheetsService';
+
+interface Reaction {
+    emoji: string;
+    count: number;
+    users: string[];
+}
+
+interface EmojiReactionsProps {
+    imageId: string;
+    memberData: FraternityMember | null;
+}
+
+const EmojiReactions: React.FC<EmojiReactionsProps> = ({ 
+    imageId, 
+    memberData 
+}) => {
+    const [reactions, setReactions] = useState<Record<string, Reaction>>({});
+
+    const availableEmojis = [
+        { emoji: '🔥', label: 'Fire' },
+        { emoji: '😂', label: 'Hilarious' },
+        { emoji: '🏖️', label: 'Miami Vibes' },
+        { emoji: '💯', label: 'Perfect' },
+        { emoji: '👑', label: 'King' },
+        { emoji: '🌴', label: 'Tropical' }
+    ];
+
+    // Load reactions from localStorage
+    useEffect(() => {
+        const savedReactions = localStorage.getItem(`reactions-${imageId}`);
+        if (savedReactions) {
+            try {
+                setReactions(JSON.parse(savedReactions));
+            } catch (error) {
+                console.error('Failed to load reactions:', error);
+            }
+        }
+    }, [imageId]);
+
+    const handleReaction = (emoji: string) => {
+        if (!memberData) return;
+
+        const currentReaction = reactions[emoji] || { emoji, count: 0, users: [] };
+        const userNickname = memberData.nickname;
+        const hasReacted = currentReaction.users.includes(userNickname);
+
+        let updatedReaction: Reaction;
+        if (hasReacted) {
+            // Remove reaction
+            updatedReaction = {
+                ...currentReaction,
+                count: Math.max(0, currentReaction.count - 1),
+                users: currentReaction.users.filter(user => user !== userNickname)
+            };
+        } else {
+            // Add reaction
+            updatedReaction = {
+                ...currentReaction,
+                count: currentReaction.count + 1,
+                users: [...currentReaction.users, userNickname]
+            };
+        }
+
+        const updatedReactions = {
+            ...reactions,
+            [emoji]: updatedReaction
+        };
+
+        // Remove emoji if count is 0
+        if (updatedReaction.count === 0) {
+            delete updatedReactions[emoji];
+        }
+
+        setReactions(updatedReactions);
+        localStorage.setItem(`reactions-${imageId}`, JSON.stringify(updatedReactions));
+    };
+
+    return (
+        <div className="mt-4 p-3 bg-black/30 backdrop-blur-sm rounded-lg">
+            <h4 className="font-permanent-marker text-white text-sm mb-3 text-center">
+                React to this photo
+            </h4>
+            
+            {/* Reaction Buttons */}
+            <div className="flex flex-wrap justify-center gap-2 mb-3">
+                {availableEmojis.map(({ emoji, label }) => {
+                    const reaction = reactions[emoji];
+                    const hasReacted = reaction?.users.includes(memberData?.nickname || '') || false;
+                    
+                    return (
+                        <motion.button
+                            key={emoji}
+                            onClick={() => handleReaction(emoji)}
+                            className={`
+                                flex items-center gap-1 px-3 py-1 rounded-full text-sm transition-all duration-200
+                                ${hasReacted 
+                                    ? 'bg-orange-500 text-white scale-110' 
+                                    : 'bg-white/20 text-white hover:bg-white/30 hover:scale-105'
+                                }
+                            `}
+                            whileHover={{ scale: hasReacted ? 1.1 : 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            title={label}
+                        >
+                            <span className="text-lg">{emoji}</span>
+                            {reaction && reaction.count > 0 && (
+                                <span className="font-bold">
+                                    {reaction.count}
+                                </span>
+                            )}
+                        </motion.button>
+                    );
+                })}
+            </div>
+
+            {/* Show who reacted (only if there are reactions) */}
+            {Object.values(reactions).some(r => r.count > 0) && (
+                <div className="text-center">
+                    {Object.entries(reactions)
+                        .filter(([, reaction]) => reaction.count > 0)
+                        .map(([emoji, reaction]) => (
+                            <div key={emoji} className="text-xs text-gray-300 mb-1">
+                                <span className="mr-1">{emoji}</span>
+                                {reaction.users.slice(0, 3).join(', ')}
+                                {reaction.users.length > 3 && ` +${reaction.users.length - 3} more`}
+                            </div>
+                        ))
+                    }
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default EmojiReactions;

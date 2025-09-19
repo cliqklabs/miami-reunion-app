@@ -1,7 +1,8 @@
 import React, { useState, ChangeEvent, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { generateMiamiImage } from './services/geminiService';
-import { saveGeneratedImage, createUserSession, getUserGallery, isFirebaseConfigured, updateImageGalleryStatus } from './services/firebaseService';
+import { saveGeneratedImage, createUserSession, getUserGallery, isFirebaseConfigured, updateImageGalleryStatus, deleteImage } from './services/firebaseService';
+import { FraternityMember } from './services/googleSheetsService';
 import PolaroidCard from './components/PolaroidCard';
 import NameEntry from './components/NameEntry';
 import HouGallery from './components/HouGallery';
@@ -57,6 +58,7 @@ const useMediaQuery = (query: string) => {
 
 function App() {
     const [userName, setUserName] = useState<string>('');
+    const [memberData, setMemberData] = useState<FraternityMember | null>(null);
     const [userSessionId, setUserSessionId] = useState<string | null>(null);
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
     const [generatedImages, setGeneratedImages] = useState<Record<string, GeneratedImage>>({});
@@ -81,13 +83,14 @@ function App() {
         checkFirebase();
     }, []);
 
-    const handleNameSubmit = async (name: string) => {
-        setUserName(name);
+    const handleMemberSubmit = async (member: FraternityMember) => {
+        setMemberData(member);
+        setUserName(member.firstName); // Use first name for display
 
         // Create Firebase session if enabled
         if (firebaseEnabled) {
             try {
-                const session = await createUserSession(name);
+                const session = await createUserSession(member.firstName);
                 if (session) {
                     setUserSessionId(session.id);
                     console.log('User session created:', session.id);
@@ -559,7 +562,7 @@ function App() {
                             <p className="font-permanent-marker text-neutral-300 mt-1 text-base tracking-wide">{currentTheme.subtitle}</p>
                         </div>
                         
-                        <NameEntry onSubmit={handleNameSubmit} />
+                        <NameEntry onSubmit={handleMemberSubmit} />
                     </div>
                 )}
 
@@ -759,7 +762,7 @@ function App() {
             
             {/* Hou' Gallery Modal */}
             {showGallery && (
-                <HouGallery onClose={handleCloseGallery} />
+                <HouGallery onClose={handleCloseGallery} memberData={memberData} />
             )}
         </main>
     );

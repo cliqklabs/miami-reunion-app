@@ -199,6 +199,11 @@ export const getAllGalleryImages = async (): Promise<GeneratedImage[]> => {
   if (!db) return [];
 
   try {
+    // Ensure user is authenticated before accessing Firestore
+    if (!auth.currentUser) {
+      await initializeAuth();
+    }
+
     const q = query(
       collection(db, 'images'),
       where('inGallery', '==', true),
