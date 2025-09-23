@@ -176,10 +176,10 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
                                     }}
                                     className="p-2 bg-black/50 rounded-full hover:bg-black/75 focus:outline-none focus:ring-2 focus:ring-white cursor-pointer"
                                 >
-                                    <HeartIcon
-                                        isSaved={isSavedToGallery}
-                                        size={20}
-                                    />
+                    <HeartIcon
+                        isSaved={isSavedToGallery}
+                        size={20}
+                    />
                                 </div>
                             )}
                             {onDownload && (
@@ -228,7 +228,7 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
                                 console.error('Failed to load image:', imageUrl);
                                 setIsImageLoaded(false);
                             }}
-                            className={`w-full h-full object-contain object-center transition-all duration-[2000ms] ease-in-out ${
+                        className={`w-full h-full object-contain object-center transition-all duration-[1200ms] ease-in-out ${
                                 isDeveloped
                                 ? 'opacity-100 filter-none'
                                 : 'opacity-70 filter sepia(0.3) contrast(0.9) brightness(0.9)'
@@ -283,7 +283,7 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
 
     if (isMobile || !shouldBeDraggable) {
         return (
-            <div className={`bg-neutral-100 dark:bg-neutral-100 !p-4 !pb-16 flex flex-col items-center justify-start aspect-[3/4] w-80 max-w-full rounded-md shadow-lg relative ${isInFront ? 'ring-2 ring-orange-400 ring-opacity-60' : ''}`}>
+            <div className={`bg-neutral-100 dark:bg-neutral-100 !p-4 !pb-16 flex flex-col items-center justify-start aspect-[3/4] w-72 md:w-80 lg:w-96 xl:w-[28rem] max-w-full rounded-[12px] shadow-[var(--shadow-soft)] border border-white/80 relative ${isInFront ? 'ring-2 ring-orange-400 ring-opacity-60' : ''}`}>
                 {cardInnerContent}
             </div>
         );
@@ -292,7 +292,7 @@ const PolaroidCard: React.FC<PolaroidCardProps> = ({ imageUrl, caption, status, 
     return (
         <DraggableCardContainer>
             <DraggableCardBody
-                className={`bg-neutral-100 dark:bg-neutral-100 !p-4 !pb-16 flex flex-col items-center justify-start aspect-[3/4] w-80 max-w-full ${isInFront ? 'ring-2 ring-orange-400 ring-opacity-60 rounded-md' : ''}`}
+                className={`bg-neutral-100 dark:bg-neutral-100 !p-4 !pb-16 flex flex-col items-center justify-start aspect-[3/4] w-72 md:w-80 lg:w-96 xl:w-[28rem] max-w-full rounded-[12px] shadow-[var(--shadow-soft)] border border-white/80 ${isInFront ? 'ring-2 ring-orange-400 ring-opacity-60' : ''}`}
                 dragConstraintsRef={dragConstraintsRef}
                 onDragStart={handleDragStart}
                 onDrag={handleDrag}

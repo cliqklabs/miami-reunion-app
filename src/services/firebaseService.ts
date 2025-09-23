@@ -222,6 +222,33 @@ export const getAllGalleryImages = async (): Promise<GeneratedImage[]> => {
   }
 };
 
+// Get all generated images from all users (including non-favorited), newest first
+export const getAllGeneratedImages = async (): Promise<GeneratedImage[]> => {
+  if (!db) return [];
+
+  try {
+    // Ensure user is authenticated before accessing Firestore
+    if (!auth.currentUser) {
+      await initializeAuth();
+    }
+
+    const q = query(
+      collection(db, 'images'),
+      orderBy('timestamp', 'desc')
+    );
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      timestamp: doc.data().timestamp.toDate(),
+    })) as GeneratedImage[];
+  } catch (error) {
+    console.error('Failed to fetch all generated images:', error);
+    return [];
+  }
+};
+
 // Emoji Reactions Functions
 
 export interface EmojiReaction {

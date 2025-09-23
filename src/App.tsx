@@ -14,12 +14,12 @@ import { getCurrentTheme } from './config/themes';
 
 const MIAMI_STYLES_KEYS = Object.keys(STYLES);
 
-// Pre-defined positions for a scattered look on desktop - centered for better laptop/desktop viewing
+// Pre-defined positions for a tighter, cleaner cluster on desktop
 const POSITIONS = [
-    { top: '8%', left: '18%', rotate: -8 },
-    { top: '18%', left: '52%', rotate: 5 },
-    { top: '50%', left: '15%', rotate: 3 },
-    { top: '5%', left: '38%', rotate: 10 },
+    { top: '8%', left: '20%', rotate: -5 },
+    { top: '16%', left: '50%', rotate: 3 },
+    { top: '48%', left: '18%', rotate: 2 },
+    { top: '4%', left: '36%', rotate: 5 },
 ];
 
 const GHOST_POLAROIDS_CONFIG = [
@@ -487,34 +487,16 @@ function App() {
     */
 
     return (
-        <main className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 lg:p-6 xl:p-8 overflow-hidden text-neutral-100 max-w-screen-2xl mx-auto">
+        <main className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 lg:p-6 xl:p-8 overflow-hidden text-neutral-100 max-w-screen-2xl mx-auto hero-pad-top">
             {/* Dark Miami 80s Gradient Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900"></div>
             <div className="absolute inset-0 bg-gradient-to-tr from-violet-950/80 via-transparent to-purple-900/60"></div>
             <div className="absolute inset-0 bg-gradient-to-bl from-transparent via-indigo-950/40 to-slate-900"></div>
             
-            {/* Neon Pink and Purple Streaks */}
+            {/* Minimal accent streaks */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {/* Large diagonal pink streak */}
-                <div className="absolute top-0 right-0 w-96 h-2 bg-gradient-to-r from-transparent via-pink-500/80 to-transparent transform rotate-45 origin-right shadow-lg shadow-pink-500/30 blur-sm"></div>
-                <div className="absolute top-1 right-1 w-96 h-0.5 bg-gradient-to-r from-transparent via-pink-400 to-transparent transform rotate-45 origin-right"></div>
-                
-                {/* Purple streak top left */}
-                <div className="absolute top-20 left-0 w-80 h-1.5 bg-gradient-to-r from-transparent via-purple-400/70 to-transparent transform -rotate-12 shadow-lg shadow-purple-400/20 blur-sm"></div>
-                <div className="absolute top-20.5 left-0.5 w-80 h-0.5 bg-gradient-to-r from-transparent via-purple-300 to-transparent transform -rotate-12"></div>
-                
-                {/* Central pink diagonal */}
-                <div className="absolute top-1/3 left-1/4 w-72 h-1 bg-gradient-to-r from-transparent via-pink-600/60 to-transparent transform rotate-30 shadow-lg shadow-pink-600/25 blur-sm"></div>
-                <div className="absolute top-1/3 left-1/4 w-72 h-0.5 bg-gradient-to-r from-transparent via-pink-400 to-transparent transform rotate-30"></div>
-                
-                {/* Bottom purple streak */}
-                <div className="absolute bottom-32 left-0 w-64 h-1.5 bg-gradient-to-r from-transparent via-purple-500/70 to-transparent transform rotate-45 shadow-lg shadow-purple-500/30 blur-sm"></div>
-                <div className="absolute bottom-32 left-0 w-64 h-0.5 bg-gradient-to-r from-transparent via-purple-300 to-transparent transform rotate-45"></div>
-                
-                {/* Smaller accent streaks */}
-                <div className="absolute top-1/2 right-20 w-48 h-1 bg-gradient-to-r from-transparent via-pink-400/50 to-transparent transform -rotate-20 blur-sm"></div>
-                <div className="absolute bottom-1/4 right-1/3 w-40 h-0.5 bg-gradient-to-r from-transparent via-purple-400/60 to-transparent transform rotate-60"></div>
-                <div className="absolute top-3/4 left-1/3 w-32 h-0.5 bg-gradient-to-r from-transparent via-pink-500/70 to-transparent transform -rotate-30"></div>
+                <div className="absolute top-10 right-10 w-80 h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent rotate-45 blur-[1px]"></div>
+                <div className="absolute bottom-20 left-10 w-64 h-px bg-gradient-to-r from-transparent via-purple-400/40 to-transparent -rotate-12 blur-[0.5px]"></div>
             </div>
             
             {/* Subtle dark grid overlay */}
@@ -534,13 +516,13 @@ function App() {
             )}
 
             <div className="z-10 flex flex-col items-center justify-center w-full h-full flex-1 min-h-0 max-w-7xl mx-auto px-4">
-                <div className={`text-center mb-6 ${appState !== 'name-entry' ? 'mt-16 md:mt-0' : ''}`}>
-                    <div className="flex justify-center mb-4">
+                <div className={`text-center mb-2 ${appState !== 'name-entry' ? 'mt-6 md:mt-0' : ''}`}>
+                    <div className="flex justify-center mb-2">
                         <img 
                             src="/logo/miami_logo_2025.png" 
                             alt="Miami Vice 2025" 
-                            className="h-24 md:h-32 lg:h-40 w-auto drop-shadow-[0_0_20px_rgba(196,181,253,0.6)]"
-                            style={{filter: 'drop-shadow(0 0 10px rgba(196,181,253,0.8)) drop-shadow(0 0 20px rgba(196,181,253,0.6)) drop-shadow(0 0 30px rgba(196,181,253,0.4))'}}
+                            className="hero-logo drop-shadow-[0_0_20px_rgba(236,72,153,0.25)]"
+                            style={{filter: 'drop-shadow(0 0 6px rgba(244,114,182,0.35)) drop-shadow(0 0 18px rgba(192,132,252,0.25))'}}
                         />
                     </div>
                 </div>
@@ -557,9 +539,9 @@ function App() {
                             <CardStackPreview />
                         </motion.div>
                         
-                        <div className="text-center mb-4">
-                            <p className="font-permanent-marker text-neutral-200 text-2xl tracking-wide">Miami Hou' 2025</p>
-                            <p className="font-permanent-marker text-neutral-300 mt-1 text-base tracking-wide">{currentTheme.subtitle}</p>
+                        <div className="text-center mb-2">
+                            <p className="text-neutral-200 text-3xl font-semibold tracking-tight">Miami Hou' 2025</p>
+                            <p className="text-neutral-300 mt-1 text-base">{currentTheme.subtitle}</p>
                         </div>
                         
                         <NameEntry onSubmit={handleMemberSubmit} />
@@ -618,10 +600,10 @@ function App() {
                                 accept="image/png, image/jpeg, image/webp" 
                                 onChange={handleImageUpload} 
                             />
-                            <p className="mt-8 font-permanent-marker text-neutral-300 text-center max-w-xs text-lg">
+                            <p className="mt-6 text-neutral-300 text-center max-w-xs text-base">
                                 Click the polaroid to upload your photo and create your Miami vibe.
                             </p>
-                            <p className="mt-4 text-sm text-neutral-200">
+                            <p className="mt-2 text-sm text-neutral-200">
                                 Welcome, {userName}!
                             </p>
                         </motion.div>
@@ -679,7 +661,7 @@ function App() {
                                 })}
                             </div>
                         ) : (
-                            <div ref={dragAreaRef} className="relative w-full max-w-5xl h-[600px] mt-4 mx-auto lg:max-w-6xl xl:max-w-7xl">
+                            <div ref={dragAreaRef} className="relative w-full max-w-6xl h-[640px] mt-2 mx-auto lg:max-w-7xl xl:max-w-[1280px]">
                                 {MIAMI_STYLES_KEYS.map((styleKey, index) => {
                                     const styleConfig = currentTheme.styles[styleKey];
                                     const { top, left, rotate } = POSITIONS[index] || { top: '20%', left: '20%', rotate: 0 };
@@ -692,15 +674,15 @@ function App() {
                                                 top, 
                                                 left,
                                                 zIndex: isInFront ? 100 : (index === 0 ? 80 : index === 2 ? 60 : 20 + (index * 5)), // Special z-index for Drug Lord (index 0) and Cocaine Cowboy (index 2)
-                                                // Add padding around card for easier clicking - extra for Drug Lord
-                                                padding: index === 0 ? '30px' : '20px'
+                                                // Tighter gaps around cards for cleaner cluster
+                                                padding: index === 0 ? '20px' : '16px'
                                             }}
                                             initial={{ opacity: 0, scale: 0.5, y: 100, rotate: 0 }}
                                             animate={{
                                                 opacity: 1,
                                                 scale: 1,
                                                 y: 0,
-                                                rotate: `${rotate}deg`,
+                                                rotate: `${Math.max(-5, Math.min(5, rotate))}deg`,
                                             }}
                                             transition={{ type: 'spring', stiffness: 100, damping: 20, delay: index * 0.15 }}
                                             onClick={(e) => {
@@ -732,11 +714,11 @@ function App() {
                                 })}
                             </div>
                         )}
-                         <div className="mt-4 flex flex-col items-center justify-center">
+                        <div className="mt-3 flex flex-col items-center justify-center">
                             {appState === 'results-shown' && (
                                 <>
                                     <div className="text-center mb-4">
-                                        <p className="font-permanent-marker text-neutral-300 text-sm">
+                                        <p className="text-neutral-300 text-sm">
                                             Click on ❤️ heart icon to add to Hou' Gallery
                                         </p>
                                     </div>

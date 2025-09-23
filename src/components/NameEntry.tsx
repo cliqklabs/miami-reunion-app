@@ -74,8 +74,8 @@ const NameEntry: React.FC<NameEntryProps> = ({ onSubmit }) => {
         >
             {!memberData ? (
                 <form onSubmit={handleSubmit} className="w-full space-y-4">
-                    <div className="text-center mb-4">
-                        <p className="text-neutral-300 font-permanent-marker text-lg">
+                    <div className="text-center mb-2">
+                        <p className="text-neutral-300 text-base">
                             Enter your email to access the Miami app
                         </p>
                     </div>
@@ -89,7 +89,7 @@ const NameEntry: React.FC<NameEntryProps> = ({ onSubmit }) => {
                                 if (error) setError('');
                             }}
                             placeholder="Enter your email"
-                            className="w-full px-6 py-4 text-xl font-permanent-marker text-center bg-white/10 backdrop-blur-sm border-2 border-white/50 rounded-lg text-white placeholder-neutral-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
+                            className="w-full px-6 py-4 text-lg text-center bg-white/10 backdrop-blur-sm border-2 border-white/50 rounded-lg text-white placeholder-neutral-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
                         />
                         {error && (
                             <p className="text-red-400 text-sm mt-2 font-medium text-center">
@@ -113,13 +113,13 @@ const NameEntry: React.FC<NameEntryProps> = ({ onSubmit }) => {
                     className="w-full space-y-4 text-center"
                 >
                     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-                        <h3 className="font-permanent-marker text-orange-400 text-xl mb-2">
+                        <h3 className="text-orange-400 text-lg mb-1">
                             Welcome Back!
                         </h3>
                         <p className="text-white text-2xl font-bold">
                             {memberData.nickname}
                         </p>
-                        <p className="text-neutral-300 text-sm mt-2">
+                        <p className="text-neutral-300 text-sm mt-1">
                             Ready to create your Miami alter ego?
                         </p>
                     </div>

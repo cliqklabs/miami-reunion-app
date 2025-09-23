@@ -1,30 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getAllGalleryImages, GeneratedImage, updateImageGalleryStatus } from './services/firebaseService';
+import { getAllGalleryImages, getAllGeneratedImages, GeneratedImage, updateImageGalleryStatus } from './services/firebaseService';
 
 const AdminApp: React.FC = () => {
     const [images, setImages] = useState<GeneratedImage[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+    const [activeTab, setActiveTab] = useState<'gallery' | 'all'>('gallery');
 
-    const loadGalleryImages = async () => {
+    const loadImages = async (tab: 'gallery' | 'all' = activeTab) => {
         try {
             setLoading(true);
-            const galleryImages = await getAllGalleryImages();
-            setImages(galleryImages);
+            const data = tab === 'gallery' ? await getAllGalleryImages() : await getAllGeneratedImages();
+            setImages(data);
             setError(null);
         } catch (err) {
-            setError('Failed to load gallery images');
-            console.error('Gallery loading error:', err);
+            setError('Failed to load images');
+            console.error('Admin load error:', err);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        loadGalleryImages();
+        loadImages('gallery');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+        loadImages(activeTab);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab]);
 
     const handleDeleteImage = async (image: GeneratedImage) => {
         // Prevent multiple delete operations on the same image
@@ -59,7 +66,7 @@ const AdminApp: React.FC = () => {
     };
 
     const handleRefresh = () => {
-        loadGalleryImages();
+        loadImages(activeTab);
     };
 
     if (loading) {
@@ -104,15 +111,31 @@ const AdminApp: React.FC = () => {
                             <p className="text-neutral-300 font-permanent-marker">Miami 2025</p>
                         </div>
                     </div>
-                    <button
-                        onClick={handleRefresh}
-                        className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-permanent-marker text-sm transition-colors flex items-center gap-2"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Refresh
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <div className="bg-white/5 rounded-xl p-1 border border-white/10">
+                            <button
+                                onClick={() => setActiveTab('gallery')}
+                                className={`px-4 py-1.5 rounded-lg text-sm font-permanent-marker transition-colors ${activeTab === 'gallery' ? 'bg-orange-500 text-white' : 'text-neutral-300 hover:text-white'}`}
+                            >
+                                Gallery
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('all')}
+                                className={`px-4 py-1.5 rounded-lg text-sm font-permanent-marker transition-colors ${activeTab === 'all' ? 'bg-orange-500 text-white' : 'text-neutral-300 hover:text-white'}`}
+                            >
+                                All Generations
+                            </button>
+                        </div>
+                        <button
+                            onClick={handleRefresh}
+                            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-permanent-marker text-sm transition-colors flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -133,10 +156,10 @@ const AdminApp: React.FC = () => {
                 {images.length === 0 && !error && (
                     <div className="text-center py-12">
                         <p className="text-neutral-400 font-permanent-marker text-xl">
-                            No images in gallery!
+                            {activeTab === 'gallery' ? 'No images in gallery!' : 'No generations yet!'}
                         </p>
                         <p className="text-neutral-500 mt-2">
-                            Images will appear here when users add them to the gallery.
+                            {activeTab === 'gallery' ? 'Images will appear here when users add them to the gallery.' : 'Generations will appear here as users create them.'}
                         </p>
                     </div>
                 )}
@@ -145,10 +168,10 @@ const AdminApp: React.FC = () => {
                     <>
                         <div className="text-center mb-6">
                             <p className="text-neutral-300 font-permanent-marker">
-                                {images.length} image{images.length !== 1 ? 's' : ''} in the gallery
+                                {images.length} {activeTab === 'gallery' ? 'image' : 'generation'}{images.length !== 1 ? 's' : ''} {activeTab === 'gallery' ? 'in the gallery' : 'in total'}
                             </p>
                             <p className="text-neutral-400 text-sm mt-1">
-                                Click the X button to remove images from the gallery
+                                {activeTab === 'gallery' ? 'Click the X button to remove images from the gallery' : 'Showing latest first'}
                             </p>
                         </div>
 
@@ -164,21 +187,23 @@ const AdminApp: React.FC = () => {
                                         transition={{ delay: index * 0.1 }}
                                         className="bg-white rounded-lg p-4 shadow-lg hover:shadow-xl transition-all duration-300 relative group"
                                     >
-                                        {/* Delete Button */}
-                                        <button
-                                            onClick={() => handleDeleteImage(image)}
-                                            disabled={deletingIds.has(image.id)}
-                                            className="absolute -top-2 -right-2 z-10 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg transition-all duration-200 group-hover:scale-110 disabled:cursor-not-allowed"
-                                            title="Remove from gallery"
-                                        >
-                                            {deletingIds.has(image.id) ? (
-                                                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-                                            ) : (
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            )}
-                                        </button>
+                                        {/* Delete Button (only in Gallery tab) */}
+                                        {activeTab === 'gallery' && (
+                                            <button
+                                                onClick={() => handleDeleteImage(image)}
+                                                disabled={deletingIds.has(image.id)}
+                                                className="absolute -top-2 -right-2 z-10 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg transition-all duration-200 group-hover:scale-110 disabled:cursor-not-allowed"
+                                                title="Remove from gallery"
+                                            >
+                                                {deletingIds.has(image.id) ? (
+                                                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                                ) : (
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                )}
+                                            </button>
+                                        )}
 
                                         <div className="aspect-[4/5] overflow-hidden rounded-md mb-3 bg-neutral-100">
                                             <img
@@ -195,7 +220,7 @@ const AdminApp: React.FC = () => {
                                                 by {image.userName}
                                             </p>
                                             <p className="text-neutral-400 text-xs">
-                                                {image.timestamp.toLocaleDateString()}
+                                                {image.timestamp.toLocaleString()}
                                             </p>
                                         </div>
                                     </motion.div>
