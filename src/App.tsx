@@ -14,12 +14,12 @@ import { getCurrentTheme } from './config/themes';
 
 const MIAMI_STYLES_KEYS = Object.keys(STYLES);
 
-// Pre-defined positions for a scattered look on desktop
+// Pre-defined positions for a scattered look on desktop - centered for better laptop/desktop viewing
 const POSITIONS = [
-    { top: '5%', left: '10%', rotate: -8 },
-    { top: '15%', left: '60%', rotate: 5 },
-    { top: '45%', left: '5%', rotate: 3 },
-    { top: '2%', left: '35%', rotate: 10 },
+    { top: '8%', left: '18%', rotate: -8 },
+    { top: '18%', left: '52%', rotate: 5 },
+    { top: '50%', left: '15%', rotate: 3 },
+    { top: '5%', left: '38%', rotate: 10 },
 ];
 
 const GHOST_POLAROIDS_CONFIG = [
@@ -487,7 +487,7 @@ function App() {
     */
 
     return (
-        <main className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 overflow-hidden text-neutral-100">
+        <main className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 lg:p-6 xl:p-8 overflow-hidden text-neutral-100 max-w-screen-2xl mx-auto">
             {/* Dark Miami 80s Gradient Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900"></div>
             <div className="absolute inset-0 bg-gradient-to-tr from-violet-950/80 via-transparent to-purple-900/60"></div>
@@ -533,7 +533,7 @@ function App() {
                 </button>
             )}
 
-            <div className="z-10 flex flex-col items-center justify-center w-full h-full flex-1 min-h-0">
+            <div className="z-10 flex flex-col items-center justify-center w-full h-full flex-1 min-h-0 max-w-7xl mx-auto px-4">
                 <div className={`text-center mb-6 ${appState !== 'name-entry' ? 'mt-16 md:mt-0' : ''}`}>
                     <div className="flex justify-center mb-4">
                         <img 
@@ -658,7 +658,7 @@ function App() {
                 {(appState === 'generating' || appState === 'results-shown') && (
                      <>
                         {isMobile ? (
-                            <div className="w-full max-w-sm flex-1 overflow-y-auto mt-4 space-y-8 p-4">
+                            <div className="w-full max-w-sm flex-1 overflow-y-auto mt-4 space-y-8 p-4 mx-auto">
                                 {MIAMI_STYLES_KEYS.map((styleKey) => {
                                     const styleConfig = currentTheme.styles[styleKey];
                                     return (
@@ -679,7 +679,7 @@ function App() {
                                 })}
                             </div>
                         ) : (
-                            <div ref={dragAreaRef} className="relative w-full max-w-4xl h-[600px] mt-4">
+                            <div ref={dragAreaRef} className="relative w-full max-w-5xl h-[600px] mt-4 mx-auto lg:max-w-6xl xl:max-w-7xl">
                                 {MIAMI_STYLES_KEYS.map((styleKey, index) => {
                                     const styleConfig = currentTheme.styles[styleKey];
                                     const { top, left, rotate } = POSITIONS[index] || { top: '20%', left: '20%', rotate: 0 };
