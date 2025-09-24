@@ -7,12 +7,17 @@ import PolaroidCard from './components/PolaroidCard';
 import NameEntry from './components/NameEntry';
 import HouGallery from './components/HouGallery';
 import CardStackPreview from './components/CardStackPreview';
+import GenderSelection, { useGenderSelection, type Gender } from './components/GenderSelection';
+// import EnhancedSettings from './components/EnhancedSettings'; // Temporarily disabled
 // import { createGalleryPage } from './lib/albumUtils'; // Removed - no longer using download functionality
 // import Footer from './components/Footer'; // Removed - no longer using footer
 import { STYLES } from './config/styles';
-import { getCurrentTheme } from './config/themes';
+import { getCurrentTheme, getStylesForGender, getStyleByName, themeSupportsGenderSelection } from './config/themes';
+import { validateAndProcessImage, formatFileSize } from './utils/imageUtils';
+// Simple commerce integration
+import { generateImageWithCommerce, CommerceTestUtils, getCommerceStatus, type UserInfo } from './services/commerceIntegration';
 
-const MIAMI_STYLES_KEYS = Object.keys(STYLES);
+// Remove legacy MIAMI_STYLES_KEYS - now using dynamic theme styles
 
 // Pre-defined positions for a scattered look on desktop - centered for better laptop/desktop viewing
 const POSITIONS = [
@@ -37,7 +42,7 @@ interface GeneratedImage {
     error?: string;
 }
 
-type AppState = 'name-entry' | 'idle' | 'image-uploaded' | 'generating' | 'results-shown';
+type AppState = 'name-entry' | 'gender-selection' | 'idle' | 'image-uploaded' | 'generating' | 'results-shown';
 
 const primaryButtonClasses = "font-permanent-marker text-xl text-center text-black bg-orange-400 py-3 px-8 rounded-sm transform transition-transform duration-200 hover:scale-105 hover:-rotate-2 hover:bg-orange-300 shadow-[2px_2px_0px_2px_rgba(0,0,0,0.2)]";
 const secondaryButtonClasses = "font-permanent-marker text-xl text-center text-white bg-white/10 backdrop-blur-sm border-2 border-white/80 py-3 px-8 rounded-sm transform transition-transform duration-200 hover:scale-105 hover:rotate-2 hover:bg-white hover:text-black";
@@ -71,7 +76,14 @@ function App() {
     const [frontCardIndex, setFrontCardIndex] = useState<number>(-1); // Track which card should be in front
     const dragAreaRef = useRef<HTMLDivElement>(null);
     const isMobile = useMediaQuery('(max-width: 768px)');
+    
+    // Enhanced theme and gender selection
     const currentTheme = getCurrentTheme();
+    const supportsGenderSelection = themeSupportsGenderSelection();
+    const { selectedGender, showGenderSelection, handleGenderSelect, resetGenderSelection } = useGenderSelection();
+    const [useEnhancedGeneration, setUseEnhancedGeneration] = useState<boolean>(
+        import.meta.env.VITE_ENABLE_ENHANCED_GENERATION === 'true'
+    );
 
     // Check Firebase configuration on mount
     useEffect(() => {
@@ -81,6 +93,14 @@ function App() {
             console.log('Firebase enabled:', configured);
         };
         checkFirebase();
+        
+        // Initialize simple commerce integration
+        const commerceStatus = getCommerceStatus();
+        console.log('🛍️ Commerce status:', commerceStatus);
+        
+        // Make test utilities available globally
+        (window as any).CommerceTestUtils = CommerceTestUtils;
+        console.log('🧪 Commerce test utilities available: CommerceTestUtils.checkStatus()');
     }, []);
 
     const handleMemberSubmit = async (member: FraternityMember) => {
@@ -100,12 +120,36 @@ function App() {
             }
         }
 
-        setAppState('idle');
+        // Check if theme supports gender selection
+        if (supportsGenderSelection && !selectedGender) {
+            setAppState('gender-selection');
+        } else {
+            setAppState('idle');
+        }
     };
 
-    const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            
+            console.log(`Original file: ${file.name}, size: ${formatFileSize(file.size)}, type: ${file.type}`);
+            
+            // Validate and process the image
+            const validation = await validateAndProcessImage(file);
+            
+            if (!validation.isValid) {
+                alert(`Image Error: ${validation.error}`);
+                e.target.value = ''; // Reset input
+                return;
+            }
+            
+            // Use the processed file if available, otherwise use original
+            const fileToUse = validation.processedFile || file;
+            
+            if (validation.processedFile && validation.originalSize && validation.processedSize) {
+                console.log(`Image processed: ${formatFileSize(validation.originalSize)} → ${formatFileSize(validation.processedSize)}`);
+            }
+            
             const reader = new FileReader();
             reader.onloadend = () => {
                 const result = reader.result as string;
@@ -115,7 +159,7 @@ function App() {
                 setGeneratedImages({}); // Clear previous results
                 setSavedToGallery({}); // Clear saved states
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(fileToUse);
         } else {
             console.log('No file selected');
         }
@@ -124,26 +168,84 @@ function App() {
         e.target.value = '';
     };
 
+    const handleGenderSelected = (gender: Gender) => {
+        console.log('Gender selected:', gender);
+        handleGenderSelect(gender);
+        setAppState('idle');
+        
+        // Debug: Check available styles for selected gender
+        const availableStyles = getStylesForGender(gender);
+        console.log('Available styles for', gender, ':', Object.keys(availableStyles));
+    };
+
     const handleGenerateClick = async () => {
         if (!uploadedImage) return;
 
         setIsLoading(true);
         setAppState('generating');
 
+        // Get styles based on gender selection
+        const stylesToGenerate = selectedGender && supportsGenderSelection 
+            ? getStylesForGender(selectedGender)
+            : currentTheme.styles;
+
+        const styleKeys = Object.keys(stylesToGenerate);
+        console.log('Generating for styles:', styleKeys, 'selectedGender:', selectedGender);
+
         const initialImages: Record<string, GeneratedImage> = {};
-        MIAMI_STYLES_KEYS.forEach(styleKey => {
+        styleKeys.forEach(styleKey => {
             initialImages[styleKey] = { status: 'pending' };
         });
         setGeneratedImages(initialImages);
 
         const concurrencyLimit = 2; // Process two styles at a time
-        const stylesQueue = [...MIAMI_STYLES_KEYS];
+        const stylesQueue = [...styleKeys];
 
         const processStyle = async (styleKey: string) => {
             try {
-                const styleConfig = currentTheme.styles[styleKey];
+                // Get style config from appropriate source
+                const styleConfig = stylesToGenerate[styleKey] || currentTheme.styles[styleKey];
+                
+                console.log(`Processing ${styleKey}:`, styleConfig);
+                
+                if (!styleConfig) {
+                    throw new Error(`Style config not found for ${styleKey}`);
+                }
+                
                 const prompt = styleConfig.prompt;
-                const resultUrl = await generateMiamiImage(uploadedImage, prompt);
+                
+                // Use enhanced generation with commerce if enabled
+                let resultUrl: string;
+                
+                if (useEnhancedGeneration && memberData) {
+                    try {
+                        const userInfo: UserInfo = {
+                            id: userSessionId || `user-${Date.now()}`,
+                            nickname: userName,
+                            email: memberData.email,
+                            firstName: memberData.firstName,
+                            lastName: memberData.lastName
+                        };
+                        
+                        const result = await generateImageWithCommerce(
+                            uploadedImage,
+                            prompt,
+                            styleKey,
+                            styleConfig.name,
+                            userInfo
+                        );
+                        
+                        resultUrl = result.image.url;
+                        console.log(`✅ Enhanced generation completed for ${styleConfig.name}`);
+                        console.log(`🛍️ Products created:`, result.products.length);
+                        console.log(`🔗 Webhook fired:`, result.webhookFired);
+                    } catch (enhancedError) {
+                        console.warn('⚠️ Enhanced generation failed, falling back to basic:', enhancedError);
+                        resultUrl = await generateMiamiImage(uploadedImage, prompt);
+                    }
+                } else {
+                    resultUrl = await generateMiamiImage(uploadedImage, prompt);
+                }
 
                 // Save to Firebase if enabled
                 if (firebaseEnabled && userSessionId) {
@@ -523,6 +625,14 @@ function App() {
             {/* Additional atmospheric glow */}
             <div className="absolute inset-0 bg-gradient-radial from-purple-900/20 via-transparent to-transparent"></div>
             
+            {/* Enhanced Settings temporarily disabled */}
+            {/* <EnhancedSettings
+                useEnhancedGeneration={useEnhancedGeneration}
+                onToggleEnhanced={setUseEnhancedGeneration}
+                selectedGender={selectedGender}
+                onResetGender={resetGenderSelection}
+            /> */}
+
             {/* View Hou' Gallery Button - Top Right */}
             {appState !== 'name-entry' && (
                 <button
@@ -563,6 +673,28 @@ function App() {
                         </div>
                         
                         <NameEntry onSubmit={handleMemberSubmit} />
+                    </div>
+                )}
+
+                {appState === 'gender-selection' && (
+                    <div className="flex flex-col items-center space-y-6">
+                        <div className="text-center mb-4">
+                            <p className="font-permanent-marker text-neutral-200 text-xl tracking-wide">Welcome, {userName}!</p>
+                        </div>
+                        
+                        <GenderSelection
+                            onGenderSelect={handleGenderSelected}
+                            theme="miami"
+                            title="Choose Your Miami Vibe"
+                            subtitle="Select your style preference for personalized alter ego options"
+                        />
+                        
+                        <button
+                            onClick={() => setAppState('idle')}
+                            className={secondaryButtonClasses + " mt-4"}
+                        >
+                            Skip - Show All Styles
+                        </button>
                     </div>
                 )}
 
@@ -615,7 +747,7 @@ function App() {
                                 id="file-upload" 
                                 type="file" 
                                 className="hidden" 
-                                accept="image/png, image/jpeg, image/webp" 
+                                accept="image/png, image/jpeg, image/jpg, image/webp" 
                                 onChange={handleImageUpload} 
                             />
                             <p className="mt-8 font-permanent-marker text-neutral-300 text-center max-w-xs text-lg">
@@ -659,8 +791,12 @@ function App() {
                      <>
                         {isMobile ? (
                             <div className="w-full max-w-sm flex-1 overflow-y-auto mt-4 space-y-8 p-4 mx-auto">
-                                {MIAMI_STYLES_KEYS.map((styleKey) => {
+                                {Object.keys(generatedImages).map((styleKey) => {
+                                    // Get style config from appropriate source
                                     const styleConfig = currentTheme.styles[styleKey];
+                                    
+                                    if (!styleConfig) return null;
+                                    
                                     return (
                                         <div key={styleKey} className="flex justify-center">
                                              <PolaroidCard
@@ -680,8 +816,12 @@ function App() {
                             </div>
                         ) : (
                             <div ref={dragAreaRef} className="relative w-full max-w-5xl h-[600px] mt-4 mx-auto lg:max-w-6xl xl:max-w-7xl">
-                                {MIAMI_STYLES_KEYS.map((styleKey, index) => {
+                                {Object.keys(generatedImages).map((styleKey, index) => {
+                                    // Get style config from appropriate source
                                     const styleConfig = currentTheme.styles[styleKey];
+                                    
+                                    if (!styleConfig) return null;
+                                    
                                     const { top, left, rotate } = POSITIONS[index] || { top: '20%', left: '20%', rotate: 0 };
                                     const isInFront = frontCardIndex === index;
                                     return (

@@ -1,0 +1,18 @@
+// Reference implementation from advanced branch
+// ByteDance SeeDream 4.0 integration patterns to adapt:
+// fal.ai client usage pattern:
+const result = await fal.subscribe("fal-ai/bytedance/seedream/v4/text-to-image", {
+  input: { prompt: enhancedPrompt },
+  logs: true
+});
+
+// Error handling pattern from advanced branch:
+try {
+  // Primary generation
+} catch (error) {
+  // Fallback logic with retry patterns
+}
+
+// Performance data from advanced branch testing:
+// - SeeDream: ~8-12 seconds, better for party/nightlife themes
+// - Gemini: ~5-8 seconds, better for professional themes

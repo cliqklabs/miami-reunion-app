@@ -1,0 +1,5 @@
+// Gender selection patterns from Ibiza implementation:
+// - Male styles: m1, m2, m3, m4, m5
+// - Female styles: f1, f2, f3, f4, f5
+// - Filter function: getStylesForGender(gender)
+// - UI component with three options: male, female, show all

@@ -1,0 +1,5 @@
+// Enhanced theme configuration from advanced branch:
+// - Multi-theme support structure
+// - Gender-aware style organization  
+// - Conditional rendering patterns
+// - Theme switching without breaking existing code
